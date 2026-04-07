@@ -44,7 +44,7 @@ export default function AffiliateSidebar({ affiliateName }: { affiliateName: str
             <p className="text-sm font-semibold text-foreground truncate">{affiliateName ?? "—"}</p>
           </div>
         )}
-        <SidebarGroup defaultOpen>
+        <SidebarGroup>
           <SidebarGroupLabel>Menu</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
