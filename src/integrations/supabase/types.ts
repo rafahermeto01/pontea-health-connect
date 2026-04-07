@@ -38,7 +38,7 @@ export type Database = {
           document?: string | null
           followers_count?: number | null
           full_name?: string | null
-          id: string
+          id?: string
           instagram_handle?: string | null
           niche?: string | null
           pix_key?: string | null
@@ -88,7 +88,7 @@ export type Database = {
           affiliate_id?: string | null
           created_at?: string | null
           doctor_id?: string | null
-          id: string
+          id?: string
           notes?: string | null
           patient_email?: string | null
           patient_name?: string | null
@@ -149,7 +149,7 @@ export type Database = {
           comment?: string | null
           created_at?: string | null
           doctor_id?: string | null
-          id: string
+          id?: string
           patient_name?: string | null
           rating?: number | null
         }
@@ -283,7 +283,7 @@ export type Database = {
           affiliate_id?: string | null
           amount_cents?: number | null
           created_at?: string | null
-          id: string
+          id?: string
           pix_key?: string | null
           processed_at?: string | null
           status?: string | null
@@ -361,7 +361,7 @@ export type Database = {
           converted?: boolean | null
           created_at?: string | null
           doctor_id?: string | null
-          id: string
+          id?: string
           ip_hash?: string | null
           landing_page?: string | null
           source_url?: string | null
