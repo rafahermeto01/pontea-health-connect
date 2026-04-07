@@ -36,7 +36,7 @@ export default function AffiliateRegistration() {
         id: userId,
         user_id: userId,
         full_name: form.fullName,
-        document: form.document,
+        document: form.cpfCnpj,
         niche: form.niche,
         instagram_handle: form.instagram,
         followers_count: Number(form.followers) || null,
