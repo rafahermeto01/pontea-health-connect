@@ -1,79 +1,143 @@
-import { useState, useMemo } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Search, SlidersHorizontal, X } from "lucide-react";
+import { Search, SlidersHorizontal, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
+import { Checkbox } from "@/components/ui/checkbox";
 import DoctorCard from "@/components/DoctorCard";
-import StarRating from "@/components/StarRating";
-import { mockDoctors, specialties, cities } from "@/data/mockDoctors";
-import { useReferral } from "@/hooks/useReferral";
-
-type SortOption = "rating" | "price_asc" | "price_desc";
+import { useDoctors, useFilterOptions, type SortOption } from "@/hooks/useDoctors";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function BuscarPage() {
-  useReferral();
   const [searchParams, setSearchParams] = useSearchParams();
 
+  // Pre-fill from URL
   const [query, setQuery] = useState(searchParams.get("q") || "");
-  const [specialty, setSpecialty] = useState(searchParams.get("esp") || "all");
+  const [selectedSpecialties, setSelectedSpecialties] = useState<string[]>(() => {
+    const esp = searchParams.get("esp");
+    return esp ? esp.split(",").map((s) => s.trim()) : [];
+  });
   const [city, setCity] = useState(searchParams.get("cidade") || "all");
-  const [priceRange, setPriceRange] = useState([0, 1000]);
+  const [priceRange, setPriceRange] = useState([0, 100000]); // centavos
   const [minRating, setMinRating] = useState(0);
-  const [onlineOnly, setOnlineOnly] = useState(false);
+  const [consultationType, setConsultationType] = useState<"all" | "online" | "presential">("all");
   const [sort, setSort] = useState<SortOption>("rating");
-  const [visibleCount, setVisibleCount] = useState(6);
 
-  const filtered = useMemo(() => {
-    let docs = mockDoctors.filter((d) => {
-      if (query && !d.name.toLowerCase().includes(query.toLowerCase()) && !d.specialty.toLowerCase().includes(query.toLowerCase())) return false;
-      if (specialty !== "all" && d.specialty !== specialty) return false;
-      if (city !== "all" && !`${d.city} - ${d.uf}`.includes(city)) return false;
-      if (d.consultationPrice < priceRange[0] || d.consultationPrice > priceRange[1]) return false;
-      if (d.rating < minRating) return false;
-      if (onlineOnly && !d.isOnline) return false;
-      return true;
-    });
+  const { specialties, cities } = useFilterOptions();
 
-    if (sort === "rating") docs.sort((a, b) => b.rating - a.rating);
-    else if (sort === "price_asc") docs.sort((a, b) => a.consultationPrice - b.consultationPrice);
-    else docs.sort((a, b) => b.consultationPrice - a.consultationPrice);
+  const { doctors, totalCount, loading, hasMore, loadMore } = useDoctors({
+    query,
+    specialties: selectedSpecialties,
+    city,
+    priceMin: priceRange[0],
+    priceMax: priceRange[1],
+    minRating,
+    consultationType,
+    sort,
+  });
 
-    return docs;
-  }, [query, specialty, city, priceRange, minRating, onlineOnly, sort]);
+  // Sync filters to URL
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (query) params.set("q", query);
+    if (selectedSpecialties.length) params.set("esp", selectedSpecialties.join(","));
+    if (city !== "all") params.set("cidade", city);
+    const existingRef = searchParams.get("ref");
+    if (existingRef) params.set("ref", existingRef);
+    setSearchParams(params, { replace: true });
+  }, [query, selectedSpecialties, city]);
 
-  const visible = filtered.slice(0, visibleCount);
+  // Referral tracking
+  useEffect(() => {
+    const ref = searchParams.get("ref");
+    if (!ref) return;
+
+    localStorage.setItem("pontea_ref", ref);
+    document.cookie = `pontea_ref=${ref}; max-age=2592000; path=/; SameSite=Lax`;
+
+    // Track click in Supabase
+    (async () => {
+      const { data: affiliate } = await supabase
+        .from("affiliates")
+        .select("id")
+        .eq("ref_code", ref)
+        .maybeSingle();
+
+      await supabase.from("referral_clicks").insert({
+        id: crypto.randomUUID(),
+        affiliate_id: affiliate?.id ?? null,
+        doctor_id: null,
+        landing_page: "/buscar",
+        specialty_filter: searchParams.get("esp") || null,
+        city_filter: searchParams.get("cidade") || null,
+        source_url: window.location.href,
+      });
+    })();
+  }, []);
+
+  const toggleSpecialty = (spec: string) => {
+    setSelectedSpecialties((prev) =>
+      prev.includes(spec) ? prev.filter((s) => s !== spec) : [...prev, spec]
+    );
+  };
 
   const FilterPanel = () => (
     <div className="flex flex-col gap-6">
+      {/* Specialties - checkboxes */}
       <div>
         <label className="mb-2 block text-sm font-medium text-foreground">Especialidade</label>
-        <Select value={specialty} onValueChange={setSpecialty}>
-          <SelectTrigger><SelectValue placeholder="Todas" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todas</SelectItem>
-            {specialties.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-          </SelectContent>
-        </Select>
+        <div className="flex flex-col gap-2 max-h-48 overflow-y-auto pr-2">
+          {specialties.map((s) => (
+            <label key={s} className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
+              <Checkbox
+                checked={selectedSpecialties.includes(s)}
+                onCheckedChange={() => toggleSpecialty(s)}
+              />
+              {s}
+            </label>
+          ))}
+          {specialties.length === 0 && (
+            <span className="text-xs text-muted-foreground">Carregando...</span>
+          )}
+        </div>
       </div>
+
+      {/* City */}
       <div>
         <label className="mb-2 block text-sm font-medium text-foreground">Cidade</label>
         <Select value={city} onValueChange={setCity}>
           <SelectTrigger><SelectValue placeholder="Todas" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todas</SelectItem>
-            {cities.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+            {cities.map((c) => (
+              <SelectItem key={`${c.city}-${c.state}`} value={c.city}>
+                {c.city} / {c.state}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
+
+      {/* Price range */}
       <div>
         <label className="mb-2 block text-sm font-medium text-foreground">
-          Faixa de Preço: R${priceRange[0]} – R${priceRange[1]}
+          Preço: {(priceRange[0] / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} –{" "}
+          {(priceRange[1] / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
         </label>
-        <Slider min={0} max={1000} step={50} value={priceRange} onValueChange={setPriceRange} className="mt-2" />
+        <Slider
+          min={0}
+          max={100000}
+          step={5000}
+          value={priceRange}
+          onValueChange={setPriceRange}
+          className="mt-2"
+        />
       </div>
+
+      {/* Min rating */}
       <div>
         <label className="mb-2 block text-sm font-medium text-foreground">Avaliação Mínima</label>
         <div className="flex gap-2">
@@ -84,11 +148,17 @@ export default function BuscarPage() {
           ))}
         </div>
       </div>
+
+      {/* Consultation type */}
       <div>
-        <label className="flex items-center gap-2 text-sm text-foreground">
-          <input type="checkbox" checked={onlineOnly} onChange={(e) => setOnlineOnly(e.target.checked)} className="accent-primary" />
-          Apenas teleconsulta
-        </label>
+        <label className="mb-2 block text-sm font-medium text-foreground">Tipo de Consulta</label>
+        <div className="flex gap-2 flex-wrap">
+          {([["all", "Ambos"], ["online", "Online"], ["presential", "Presencial"]] as const).map(([val, label]) => (
+            <Button key={val} size="sm" variant={consultationType === val ? "default" : "outline"} onClick={() => setConsultationType(val)}>
+              {label}
+            </Button>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -114,6 +184,7 @@ export default function BuscarPage() {
             <SelectItem value="rating">Melhor Avaliado</SelectItem>
             <SelectItem value="price_asc">Menor Preço</SelectItem>
             <SelectItem value="price_desc">Maior Preço</SelectItem>
+            <SelectItem value="reviews">Mais Avaliados</SelectItem>
           </SelectContent>
         </Select>
 
@@ -138,17 +209,32 @@ export default function BuscarPage() {
 
         {/* Results */}
         <div className="flex-1">
-          <p className="mb-4 text-sm text-muted-foreground">{filtered.length} médico(s) encontrado(s)</p>
+          <p className="mb-4 text-sm text-muted-foreground">
+            {loading && doctors.length === 0 ? "Buscando..." : `${totalCount} médico(s) encontrado(s)`}
+          </p>
+
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-2">
-            {visible.map((d) => <DoctorCard key={d.id} doctor={d} />)}
+            {doctors.map((d) => (
+              <DoctorCard key={d.id} doctor={d} />
+            ))}
           </div>
-          {visible.length < filtered.length && (
-            <div className="mt-8 text-center">
-              <Button variant="outline" onClick={() => setVisibleCount((c) => c + 6)}>Carregar mais</Button>
+
+          {loading && (
+            <div className="mt-8 flex justify-center">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
             </div>
           )}
-          {filtered.length === 0 && (
-            <p className="py-20 text-center text-muted-foreground">Nenhum médico encontrado com esses filtros.</p>
+
+          {!loading && hasMore && doctors.length > 0 && (
+            <div className="mt-8 text-center">
+              <Button variant="outline" onClick={loadMore}>Carregar mais</Button>
+            </div>
+          )}
+
+          {!loading && doctors.length === 0 && (
+            <p className="py-20 text-center text-muted-foreground">
+              Nenhum médico encontrado com esses filtros. Tente ampliar sua busca.
+            </p>
           )}
         </div>
       </div>
