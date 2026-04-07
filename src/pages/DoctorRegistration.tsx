@@ -35,15 +35,23 @@ export default function DoctorRegistration() {
       const userId = authData.user?.id;
       if (!userId) throw new Error("Erro ao criar usuário");
 
+      const slug = form.fullName
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase().trim().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+
       const { error: docError } = await supabase.from("doctors").insert({
         user_id: userId,
-        crm: `${form.crm}/${form.uf}`,
+        full_name: form.fullName,
+        crm_number: form.crm,
+        crm_state: form.uf,
         specialty: form.specialty,
         city: form.city,
+        phone: form.phone,
         consultation_price: Number(form.consultationPrice),
         calendar_link: form.calendarLink,
+        accepts_online: form.isOnline,
         bio: form.bio,
-        slug: form.fullName.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, ""),
+        slug,
       });
       if (docError) throw docError;
 
