@@ -13,6 +13,12 @@ import Login from "./pages/Login";
 import DoctorRegistration from "./pages/DoctorRegistration";
 import AffiliateRegistration from "./pages/AffiliateRegistration";
 import NotFound from "./pages/NotFound";
+import AffiliateDashboardLayout from "./pages/affiliate/AffiliateDashboardLayout";
+import AffiliateOverview from "./pages/affiliate/AffiliateOverview";
+import AffiliateGenerateLinks from "./pages/affiliate/AffiliateGenerateLinks";
+import AffiliateMyLinks from "./pages/affiliate/AffiliateMyLinks";
+import AffiliateCommissions from "./pages/affiliate/AffiliateCommissions";
+import AffiliatePayouts from "./pages/affiliate/AffiliatePayouts";
 
 const queryClient = new QueryClient();
 
@@ -32,6 +38,13 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="/cadastro/medico" element={<DoctorRegistration />} />
             <Route path="/cadastro/afiliado" element={<AffiliateRegistration />} />
+          </Route>
+          <Route path="/dashboard/afiliado" element={<AffiliateDashboardLayout />}>
+            <Route index element={<AffiliateOverview />} />
+            <Route path="links" element={<AffiliateGenerateLinks />} />
+            <Route path="meus-links" element={<AffiliateMyLinks />} />
+            <Route path="comissoes" element={<AffiliateCommissions />} />
+            <Route path="saques" element={<AffiliatePayouts />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>

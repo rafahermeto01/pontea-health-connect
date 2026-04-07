@@ -16,73 +16,106 @@ export type Database = {
     Tables: {
       affiliates: {
         Row: {
-          balance_cents: number
-          commission_rate: number
-          created_at: string
+          balance_cents: number | null
+          commission_rate: number | null
+          created_at: string | null
+          document: string | null
+          followers_count: number | null
+          full_name: string | null
           id: string
-          is_approved: boolean
-          niche: string
-          referral_code: string | null
-          social_media: string
-          updated_at: string
-          user_id: string
+          instagram_handle: string | null
+          niche: string | null
+          pix_key: string | null
+          ref_code: string | null
+          status: string | null
+          total_earned_cents: number | null
+          user_id: string | null
         }
         Insert: {
-          balance_cents?: number
-          commission_rate?: number
-          created_at?: string
-          id?: string
-          is_approved?: boolean
-          niche: string
-          referral_code?: string | null
-          social_media: string
-          updated_at?: string
-          user_id: string
+          balance_cents?: number | null
+          commission_rate?: number | null
+          created_at?: string | null
+          document?: string | null
+          followers_count?: number | null
+          full_name?: string | null
+          id: string
+          instagram_handle?: string | null
+          niche?: string | null
+          pix_key?: string | null
+          ref_code?: string | null
+          status?: string | null
+          total_earned_cents?: number | null
+          user_id?: string | null
         }
         Update: {
-          balance_cents?: number
-          commission_rate?: number
-          created_at?: string
+          balance_cents?: number | null
+          commission_rate?: number | null
+          created_at?: string | null
+          document?: string | null
+          followers_count?: number | null
+          full_name?: string | null
           id?: string
-          is_approved?: boolean
-          niche?: string
-          referral_code?: string | null
-          social_media?: string
-          updated_at?: string
-          user_id?: string
+          instagram_handle?: string | null
+          niche?: string | null
+          pix_key?: string | null
+          ref_code?: string | null
+          status?: string | null
+          total_earned_cents?: number | null
+          user_id?: string | null
         }
         Relationships: []
       }
       appointments: {
         Row: {
+          affiliate_commission_cents: number | null
           affiliate_id: string | null
-          created_at: string
-          doctor_id: string
+          created_at: string | null
+          doctor_id: string | null
           id: string
-          patient_name: string
-          price: number
-          status: string
-          updated_at: string
+          notes: string | null
+          patient_email: string | null
+          patient_name: string | null
+          patient_phone: string | null
+          payment_status: string | null
+          platform_fee_cents: number | null
+          price_cents: number | null
+          ref_code: string | null
+          scheduled_at: string | null
+          status: string | null
         }
         Insert: {
+          affiliate_commission_cents?: number | null
           affiliate_id?: string | null
-          created_at?: string
-          doctor_id: string
-          id?: string
-          patient_name: string
-          price?: number
-          status?: string
-          updated_at?: string
+          created_at?: string | null
+          doctor_id?: string | null
+          id: string
+          notes?: string | null
+          patient_email?: string | null
+          patient_name?: string | null
+          patient_phone?: string | null
+          payment_status?: string | null
+          platform_fee_cents?: number | null
+          price_cents?: number | null
+          ref_code?: string | null
+          scheduled_at?: string | null
+          status?: string | null
         }
         Update: {
+          affiliate_commission_cents?: number | null
           affiliate_id?: string | null
-          created_at?: string
-          doctor_id?: string
+          created_at?: string | null
+          doctor_id?: string | null
           id?: string
-          patient_name?: string
-          price?: number
-          status?: string
-          updated_at?: string
+          notes?: string | null
+          patient_email?: string | null
+          patient_name?: string | null
+          patient_phone?: string | null
+          payment_status?: string | null
+          platform_fee_cents?: number | null
+          price_cents?: number | null
+          ref_code?: string | null
+          scheduled_at?: string | null
+          status?: string | null
         }
         Relationships: [
           {
@@ -101,83 +134,42 @@ export type Database = {
           },
         ]
       }
-      commissions: {
-        Row: {
-          affiliate_id: string
-          commission_value: number
-          consultation_value: number
-          created_at: string
-          doctor_id: string
-          id: string
-          patient_name: string
-          status: string
-          updated_at: string
-        }
-        Insert: {
-          affiliate_id: string
-          commission_value?: number
-          consultation_value?: number
-          created_at?: string
-          doctor_id: string
-          id?: string
-          patient_name?: string
-          status?: string
-          updated_at?: string
-        }
-        Update: {
-          affiliate_id?: string
-          commission_value?: number
-          consultation_value?: number
-          created_at?: string
-          doctor_id?: string
-          id?: string
-          patient_name?: string
-          status?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "commissions_affiliate_id_fkey"
-            columns: ["affiliate_id"]
-            isOneToOne: false
-            referencedRelation: "affiliates"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "commissions_doctor_id_fkey"
-            columns: ["doctor_id"]
-            isOneToOne: false
-            referencedRelation: "doctors"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       doctor_reviews: {
         Row: {
+          appointment_id: string | null
           comment: string | null
-          created_at: string
-          doctor_id: string
+          created_at: string | null
+          doctor_id: string | null
           id: string
-          patient_name: string
-          rating: number
+          patient_name: string | null
+          rating: number | null
         }
         Insert: {
+          appointment_id?: string | null
           comment?: string | null
-          created_at?: string
-          doctor_id: string
-          id?: string
-          patient_name?: string
-          rating?: number
+          created_at?: string | null
+          doctor_id?: string | null
+          id: string
+          patient_name?: string | null
+          rating?: number | null
         }
         Update: {
+          appointment_id?: string | null
           comment?: string | null
-          created_at?: string
-          doctor_id?: string
+          created_at?: string | null
+          doctor_id?: string | null
           id?: string
-          patient_name?: string
-          rating?: number
+          patient_name?: string | null
+          rating?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "doctor_reviews_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "doctor_reviews_doctor_id_fkey"
             columns: ["doctor_id"]
@@ -189,76 +181,121 @@ export type Database = {
       }
       doctors: {
         Row: {
+          accepts_online: boolean | null
+          accepts_presential: boolean | null
+          address: string | null
+          avatar_url: string | null
+          avg_rating: number | null
           bio: string | null
           calendar_link: string | null
           city: string | null
+          consultation_duration: number | null
           consultation_price: number | null
-          created_at: string
-          crm: string
+          created_at: string | null
+          crm_number: string | null
+          crm_state: string | null
+          education: string | null
+          experience_years: number | null
+          full_name: string | null
           id: string
-          is_verified: boolean
-          photo_url: string | null
+          is_active: boolean | null
+          phone: string | null
+          plan: string | null
           slug: string | null
-          specialty: string
-          updated_at: string
-          user_id: string
+          specialty: string | null
+          state: string | null
+          tags: string[] | null
+          total_reviews: number | null
+          updated_at: string | null
+          user_id: string | null
         }
         Insert: {
+          accepts_online?: boolean | null
+          accepts_presential?: boolean | null
+          address?: string | null
+          avatar_url?: string | null
+          avg_rating?: number | null
           bio?: string | null
           calendar_link?: string | null
           city?: string | null
+          consultation_duration?: number | null
           consultation_price?: number | null
-          created_at?: string
-          crm: string
+          created_at?: string | null
+          crm_number?: string | null
+          crm_state?: string | null
+          education?: string | null
+          experience_years?: number | null
+          full_name?: string | null
           id?: string
-          is_verified?: boolean
-          photo_url?: string | null
+          is_active?: boolean | null
+          phone?: string | null
+          plan?: string | null
           slug?: string | null
-          specialty: string
-          updated_at?: string
-          user_id: string
+          specialty?: string | null
+          state?: string | null
+          tags?: string[] | null
+          total_reviews?: number | null
+          updated_at?: string | null
+          user_id?: string | null
         }
         Update: {
+          accepts_online?: boolean | null
+          accepts_presential?: boolean | null
+          address?: string | null
+          avatar_url?: string | null
+          avg_rating?: number | null
           bio?: string | null
           calendar_link?: string | null
           city?: string | null
+          consultation_duration?: number | null
           consultation_price?: number | null
-          created_at?: string
-          crm?: string
+          created_at?: string | null
+          crm_number?: string | null
+          crm_state?: string | null
+          education?: string | null
+          experience_years?: number | null
+          full_name?: string | null
           id?: string
-          is_verified?: boolean
-          photo_url?: string | null
+          is_active?: boolean | null
+          phone?: string | null
+          plan?: string | null
           slug?: string | null
-          specialty?: string
-          updated_at?: string
-          user_id?: string
+          specialty?: string | null
+          state?: string | null
+          tags?: string[] | null
+          total_reviews?: number | null
+          updated_at?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
       payouts: {
         Row: {
-          affiliate_id: string
-          amount_cents: number
-          created_at: string
+          affiliate_id: string | null
+          amount_cents: number | null
+          created_at: string | null
           id: string
-          status: string
-          updated_at: string
+          pix_key: string | null
+          processed_at: string | null
+          status: string | null
         }
         Insert: {
-          affiliate_id: string
-          amount_cents: number
-          created_at?: string
-          id?: string
-          status?: string
-          updated_at?: string
+          affiliate_id?: string | null
+          amount_cents?: number | null
+          created_at?: string | null
+          id: string
+          pix_key?: string | null
+          processed_at?: string | null
+          status?: string | null
         }
         Update: {
-          affiliate_id?: string
-          amount_cents?: number
-          created_at?: string
+          affiliate_id?: string | null
+          amount_cents?: number | null
+          created_at?: string | null
           id?: string
-          status?: string
-          updated_at?: string
+          pix_key?: string | null
+          processed_at?: string | null
+          status?: string | null
         }
         Relationships: [
           {
@@ -306,30 +343,42 @@ export type Database = {
       referral_clicks: {
         Row: {
           affiliate_id: string | null
-          affiliate_ref_code: string
-          clicked_at: string
-          doctor_id: string
+          appointment_id: string | null
+          city_filter: string | null
+          converted: boolean | null
+          created_at: string | null
+          doctor_id: string | null
           id: string
           ip_hash: string | null
-          user_agent: string | null
+          landing_page: string | null
+          source_url: string | null
+          specialty_filter: string | null
         }
         Insert: {
           affiliate_id?: string | null
-          affiliate_ref_code: string
-          clicked_at?: string
-          doctor_id: string
-          id?: string
+          appointment_id?: string | null
+          city_filter?: string | null
+          converted?: boolean | null
+          created_at?: string | null
+          doctor_id?: string | null
+          id: string
           ip_hash?: string | null
-          user_agent?: string | null
+          landing_page?: string | null
+          source_url?: string | null
+          specialty_filter?: string | null
         }
         Update: {
           affiliate_id?: string | null
-          affiliate_ref_code?: string
-          clicked_at?: string
-          doctor_id?: string
+          appointment_id?: string | null
+          city_filter?: string | null
+          converted?: boolean | null
+          created_at?: string | null
+          doctor_id?: string | null
           id?: string
           ip_hash?: string | null
-          user_agent?: string | null
+          landing_page?: string | null
+          source_url?: string | null
+          specialty_filter?: string | null
         }
         Relationships: [
           {
@@ -337,6 +386,13 @@ export type Database = {
             columns: ["affiliate_id"]
             isOneToOne: false
             referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referral_clicks_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
             referencedColumns: ["id"]
           },
           {
