@@ -33,9 +33,14 @@ export default function AffiliateRegistration() {
       if (!userId) throw new Error("Erro ao criar usuário");
 
       const { error: affError } = await supabase.from("affiliates").insert({
+        id: userId,
         user_id: userId,
-        social_media: form.instagram,
+        full_name: form.fullName,
+        document: form.document,
         niche: form.niche,
+        instagram_handle: form.instagram,
+        followers_count: Number(form.followers) || null,
+        ref_code: form.fullName.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, ""),
       });
       if (affError) throw affError;
 
