@@ -3,7 +3,7 @@ import { useOutletContext } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CalendarCheck, DollarSign, Star, Users } from "lucide-react";
-import { formatCurrency } from "@/lib/utils"; // Assuming a utility, or I can just format inline
+
 
 export default function DoctorOverview() {
   const { doctor } = useOutletContext<{ doctor: any }>();

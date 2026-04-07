@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import type { FormEvent } from "react";
 import { useOutletContext } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -52,7 +53,7 @@ export default function AffiliatePayouts() {
     fetchPayouts();
   }, [affiliate.id]);
 
-  const handleRequestPayout = async (e: React.FormEvent) => {
+  const handleRequestPayout = async (e: FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
 
