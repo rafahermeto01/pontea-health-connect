@@ -3,8 +3,16 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import Index from "./pages/Index.tsx";
-import NotFound from "./pages/NotFound.tsx";
+import Layout from "@/components/Layout";
+import Index from "./pages/Index";
+import Buscar from "./pages/Buscar";
+import DoctorProfile from "./pages/DoctorProfile";
+import ForDoctors from "./pages/ForDoctors";
+import ForAffiliates from "./pages/ForAffiliates";
+import Login from "./pages/Login";
+import DoctorRegistration from "./pages/DoctorRegistration";
+import AffiliateRegistration from "./pages/AffiliateRegistration";
+import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
@@ -15,8 +23,16 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route element={<Layout />}>
+            <Route path="/" element={<Index />} />
+            <Route path="/buscar" element={<Buscar />} />
+            <Route path="/dr/:slug" element={<DoctorProfile />} />
+            <Route path="/para-medicos" element={<ForDoctors />} />
+            <Route path="/para-afiliados" element={<ForAffiliates />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/cadastro/medico" element={<DoctorRegistration />} />
+            <Route path="/cadastro/afiliado" element={<AffiliateRegistration />} />
+          </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
