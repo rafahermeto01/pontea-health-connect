@@ -1,190 +1,252 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useOutletContext } from "react-router-dom";
-import { Wallet, Loader2 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { supabase } from "@/integrations/supabase/client";
+import { Wallet, Landmark } from "lucide-react";
 import { toast } from "sonner";
-import type { AffiliateData } from "@/hooks/useAffiliate";
-import { useAffiliate } from "@/hooks/useAffiliate";
-
-function formatBRL(cents: number) {
-  return (cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-}
-
-function formatDate(iso: string | null) {
-  return iso ? new Date(iso).toLocaleDateString("pt-BR") : "—";
-}
-
-function payoutStatusBadge(status: string | null) {
-  switch (status) {
-    case "completed": return <Badge className="bg-green-500/20 text-green-400">Concluído</Badge>;
-    case "processing": return <Badge className="bg-blue-500/20 text-blue-400">Processando</Badge>;
-    case "failed": return <Badge className="bg-red-500/20 text-red-400">Falhou</Badge>;
-    default: return <Badge className="bg-yellow-500/20 text-yellow-400">Pendente</Badge>;
-  }
-}
-
-interface Payout {
-  id: string;
-  created_at: string | null;
-  amount_cents: number | null;
-  pix_key: string | null;
-  status: string | null;
-  processed_at: string | null;
-}
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
 export default function AffiliatePayouts() {
-  const { affiliate } = useOutletContext<{ affiliate: AffiliateData }>();
-  const { refetch } = useAffiliate();
-  const [payouts, setPayouts] = useState<Payout[]>([]);
+  const { affiliate } = useOutletContext<{ affiliate: any }>();
+  const [payouts, setPayouts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [amount, setAmount] = useState("");
-  const [pixKey, setPixKey] = useState(affiliate.pix_key ?? "");
+  
+  // Modal state
+  const [open, setOpen] = useState(false);
+  const [amountStr, setAmountStr] = useState(((affiliate.balance_cents || 0) / 100).toFixed(2));
+  const [pixKey, setPixKey] = useState(affiliate.pix_key || "");
   const [submitting, setSubmitting] = useState(false);
 
-  const balance = affiliate.balance_cents ?? 0;
-
-  async function loadPayouts() {
+  const fetchPayouts = async () => {
+    setLoading(true);
     const { data } = await supabase
       .from("payouts")
       .select("*")
       .eq("affiliate_id", affiliate.id)
       .order("created_at", { ascending: false });
-    setPayouts((data as Payout[]) ?? []);
+
+    setPayouts(data || []);
     setLoading(false);
-  }
+  };
 
-  useEffect(() => { loadPayouts(); }, [affiliate.id]);
+  useEffect(() => {
+    fetchPayouts();
+  }, [affiliate.id]);
 
-  const handleRequest = async () => {
-    const amountCents = Math.round(parseFloat(amount) * 100);
-    if (isNaN(amountCents) || amountCents < 5000) {
-      toast.error("Valor mínimo de R$ 50,00.");
-      return;
-    }
-    if (amountCents > balance) {
-      toast.error("Valor excede o saldo disponível.");
-      return;
-    }
-    if (!pixKey.trim()) {
-      toast.error("Informe a chave PIX.");
-      return;
-    }
-
+  const handleRequestPayout = async (e: React.FormEvent) => {
+    e.preventDefault();
     setSubmitting(true);
 
-    const { error: insertErr } = await supabase.from("payouts").insert({
-      id: crypto.randomUUID(),
-      affiliate_id: affiliate.id,
-      amount_cents: amountCents,
-      pix_key: pixKey,
-      status: "pending",
-    });
+    try {
+      const amountCents = Math.round(parseFloat(amountStr.replace(",", ".")) * 100);
+      const availableCents = affiliate.balance_cents || 0;
 
-    if (insertErr) {
-      toast.error("Erro ao solicitar saque.");
+      if (isNaN(amountCents) || amountCents <= 0) {
+        throw new Error("Valor inválido");
+      }
+      
+      if (amountCents < 5000) {
+        throw new Error("O valor mínimo para saque é R$ 50,00");
+      }
+      
+      if (amountCents > availableCents) {
+        throw new Error("Saldo insuficiente");
+      }
+
+      if (!pixKey.trim()) {
+        throw new Error("Chave PIX obrigatória");
+      }
+
+      // Insert payout request
+      const { error: insertError } = await supabase.from("payouts").insert({
+        affiliate_id: affiliate.id,
+        amount_cents: amountCents,
+        pix_key: pixKey.trim(),
+        status: "pending"
+      });
+
+      if (insertError) throw insertError;
+
+      // Update affiliate balance
+      const { error: updateError } = await supabase.from("affiliates").update({
+        balance_cents: availableCents - amountCents
+      }).eq("id", affiliate.id);
+
+      if (updateError) throw updateError;
+      
+      // Update local state temporarily (usually you'd refresh context, but this is a quick fix for UX)
+      affiliate.balance_cents = availableCents - amountCents; 
+      
+      toast.success("Solicitação de saque enviada com sucesso!");
+      setOpen(false);
+      fetchPayouts();
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao solicitar saque");
+    } finally {
       setSubmitting(false);
-      return;
     }
+  };
 
-    // Update balance — use RPC or direct update
-    const newBalance = balance - amountCents;
-    await supabase.from("affiliates").update({ balance_cents: newBalance }).eq("id", affiliate.id);
+  const formatBRL = (cents: number) => {
+    if (!cents) return "R$ 0,00";
+    return (cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  };
 
-    toast.success("Saque solicitado com sucesso!");
-    setModalOpen(false);
-    setSubmitting(false);
-    await refetch();
-    await loadPayouts();
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "completed":
+        return <Badge className="bg-emerald-500/20 text-emerald-500 border-0">Transferido</Badge>;
+      case "pending":
+        return <Badge className="bg-amber-500/20 text-amber-500 border-0">Em análise</Badge>;
+      case "processing":
+        return <Badge className="bg-blue-500/20 text-blue-500 border-0">Processando</Badge>;
+      case "failed":
+        return <Badge className="bg-red-500/20 text-red-500 border-0">Falho</Badge>;
+      default:
+        return <Badge variant="outline" className="text-slate-400 border-slate-700">{status}</Badge>;
+    }
   };
 
   return (
-    <div className="space-y-6">
-      <Card className="bg-card border-border">
-        <CardContent className="flex items-center justify-between py-6">
-          <div className="flex items-center gap-3">
-            <Wallet className="h-8 w-8 text-primary" />
+    <div className="space-y-6 text-slate-100">
+      <div>
+        <h2 className="text-2xl font-bold tracking-tight text-white">Saques</h2>
+        <p className="text-slate-400">Gerencie seus resgates para a sua conta via PIX.</p>
+      </div>
+
+      <Card className="bg-[#1E293B] border-slate-800">
+        <CardContent className="pt-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <p className="text-sm text-muted-foreground">Saldo Disponível</p>
-              <p className="text-2xl font-bold text-foreground">{formatBRL(balance)}</p>
+              <p className="text-sm font-medium text-slate-400">Saldo Disponível para Saque</p>
+              <div className="flex items-center gap-2 mt-1">
+                <Wallet className="h-6 w-6 text-emerald-400" />
+                <span className="text-3xl font-bold text-white">
+                  {formatBRL(affiliate.balance_cents)}
+                </span>
+              </div>
             </div>
+
+            <Dialog open={open} onOpenChange={setOpen}>
+              <DialogTrigger asChild>
+                <Button className="bg-[#0D9488] hover:bg-[#0f766e] text-white">
+                  Solicitar Saque
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="bg-[#0F172A] border-slate-800 text-slate-100 sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle className="text-white">Resgatar Saldo</DialogTitle>
+                  <DialogDescription className="text-slate-400">
+                    O valor será depositado na sua conta via PIX em até 2 dias úteis.
+                  </DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handleRequestPayout} className="space-y-4 pt-4">
+                  <div className="space-y-2">
+                    <Label className="text-slate-300">Valor (R$)</Label>
+                    <Input 
+                      type="number" 
+                      step="0.01" 
+                      min="50"
+                      value={amountStr} 
+                      onChange={e => setAmountStr(e.target.value)} 
+                      className="bg-[#1E293B] border-slate-700 text-white"
+                      required 
+                    />
+                    <p className="text-xs text-slate-500">Mínimo de saque: R$ 50,00</p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-slate-300">Chave PIX</Label>
+                    <Input 
+                      value={pixKey} 
+                      onChange={e => setPixKey(e.target.value)} 
+                      className="bg-[#1E293B] border-slate-700 text-white"
+                      placeholder="CPF, E-mail, Celular ou Aleatória"
+                      required 
+                    />
+                  </div>
+                  <Button type="submit" disabled={submitting} className="w-full bg-[#0D9488] hover:bg-[#0f766e] text-white mt-4">
+                    {submitting ? "Processando..." : "Confirmar Solicitação"}
+                  </Button>
+                </form>
+              </DialogContent>
+            </Dialog>
           </div>
-          <Button onClick={() => { setAmount((balance / 100).toFixed(2)); setModalOpen(true); }} disabled={balance < 5000}>
-            Solicitar Saque
-          </Button>
         </CardContent>
       </Card>
 
-      <Card className="bg-card border-border">
+      <Card className="bg-[#1E293B] border-slate-800">
         <CardHeader>
-          <CardTitle className="text-foreground">Histórico de Saques</CardTitle>
+          <div className="flex items-center space-x-2">
+            <Landmark className="h-5 w-5 text-[#0D9488]" />
+            <CardTitle className="text-white">Histórico de Saques</CardTitle>
+          </div>
         </CardHeader>
         <CardContent>
-          {loading ? (
-            <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
-          ) : payouts.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-8 text-center">Nenhum saque realizado.</p>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
+          <div className="rounded-md border border-slate-700 bg-[#0F172A] overflow-hidden">
+            <Table>
+              <TableHeader className="bg-[#1E293B] border-b border-slate-700">
+                <TableRow className="border-b border-slate-700 hover:bg-transparent">
+                  <TableHead className="text-slate-300">Data Solicitação</TableHead>
+                  <TableHead className="text-slate-300">Valor</TableHead>
+                  <TableHead className="text-slate-300">Chave PIX</TableHead>
+                  <TableHead className="text-slate-300">Status</TableHead>
+                  <TableHead className="text-slate-300">Data Processamento</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {loading ? (
                   <TableRow>
-                    <TableHead>Data</TableHead>
-                    <TableHead className="text-right">Valor</TableHead>
-                    <TableHead>Chave PIX</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Processado em</TableHead>
+                    <TableCell colSpan={5} className="text-center text-slate-500 py-8">Carregando saques...</TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {payouts.map((p) => (
-                    <TableRow key={p.id}>
-                      <TableCell>{formatDate(p.created_at)}</TableCell>
-                      <TableCell className="text-right font-medium">{formatBRL(p.amount_cents ?? 0)}</TableCell>
-                      <TableCell className="font-mono text-xs">{p.pix_key}</TableCell>
-                      <TableCell>{payoutStatusBadge(p.status)}</TableCell>
-                      <TableCell>{formatDate(p.processed_at)}</TableCell>
+                ) : payouts.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center text-slate-500 py-8">Nenhum saque solicitado ainda.</TableCell>
+                  </TableRow>
+                ) : (
+                  payouts.map((row, i) => (
+                    <TableRow key={i} className="border-b border-slate-800 hover:bg-slate-800/50">
+                      <TableCell className="text-slate-300 font-medium">
+                        {new Date(row.created_at).toLocaleDateString("pt-BR")}
+                      </TableCell>
+                      <TableCell className="text-emerald-400 font-medium">
+                        {formatBRL(row.amount_cents)}
+                      </TableCell>
+                      <TableCell className="text-slate-400 font-mono text-sm max-w-[150px] truncate">
+                        {row.pix_key}
+                      </TableCell>
+                      <TableCell>
+                        {getStatusBadge(row.status)}
+                      </TableCell>
+                      <TableCell className="text-slate-400 text-sm">
+                        {row.processed_at ? new Date(row.processed_at).toLocaleDateString("pt-BR") : "—"}
+                      </TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
-
-      {/* Payout modal */}
-      <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className="bg-card border-border">
-          <DialogHeader>
-            <DialogTitle className="text-foreground">Solicitar Saque</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <label className="mb-1 block text-sm text-muted-foreground">Valor (R$)</label>
-              <Input type="number" step="0.01" min="50" value={amount} onChange={(e) => setAmount(e.target.value)} />
-              <p className="mt-1 text-xs text-muted-foreground">Mínimo: R$ 50,00 — Saldo: {formatBRL(balance)}</p>
-            </div>
-            <div>
-              <label className="mb-1 block text-sm text-muted-foreground">Chave PIX</label>
-              <Input value={pixKey} onChange={(e) => setPixKey(e.target.value)} placeholder="CPF, email, telefone ou chave aleatória" />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setModalOpen(false)}>Cancelar</Button>
-            <Button onClick={handleRequest} disabled={submitting}>
-              {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-              Confirmar Saque
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

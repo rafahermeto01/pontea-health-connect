@@ -64,17 +64,18 @@ export default function BuscarPage() {
         .from("affiliates")
         .select("id")
         .eq("ref_code", ref)
-        .maybeSingle();
+        .eq("status", "approved")
+        .single();
 
-      await supabase.from("referral_clicks").insert({
-        id: crypto.randomUUID(),
-        affiliate_id: affiliate?.id ?? null,
-        doctor_id: null,
-        landing_page: "/buscar",
-        specialty_filter: searchParams.get("esp") || null,
-        city_filter: searchParams.get("cidade") || null,
-        source_url: window.location.href,
-      });
+      if (affiliate) {
+        await supabase.from("referral_clicks").insert({
+          affiliate_id: affiliate.id,
+          doctor_id: null,
+          landing_page: "/buscar",
+          specialty_filter: searchParams.get("esp"),
+          city_filter: searchParams.get("cidade"),
+        });
+      }
     })();
   }, []);
 
@@ -233,7 +234,7 @@ export default function BuscarPage() {
 
           {!loading && doctors.length === 0 && (
             <p className="py-20 text-center text-muted-foreground">
-              Nenhum médico encontrado com esses filtros. Tente ampliar sua busca.
+              Nenhum médico encontrado. Tente ampliar sua busca.
             </p>
           )}
         </div>

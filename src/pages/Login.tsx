@@ -19,20 +19,16 @@ export default function LoginPage() {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
 
-      // Check user role
-      const { data: roles } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", data.user.id);
-
-      const role = roles?.[0]?.role;
+      // Check user role from metadata
+      const role = data.user.user_metadata?.user_type;
+      
       if (role === "doctor") navigate("/dashboard/medico");
       else if (role === "affiliate") navigate("/dashboard/afiliado");
       else navigate("/buscar");
 
       toast.success("Login realizado com sucesso!");
     } catch (err: any) {
-      toast.error(err.message || "Erro ao fazer login");
+      toast.error("Credenciais inválidas");
     } finally {
       setLoading(false);
     }

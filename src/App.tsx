@@ -20,6 +20,16 @@ import AffiliateMyLinks from "./pages/affiliate/AffiliateMyLinks";
 import AffiliateCommissions from "./pages/affiliate/AffiliateCommissions";
 import AffiliatePayouts from "./pages/affiliate/AffiliatePayouts";
 
+import ProtectedRoute from "@/components/ProtectedRoute";
+
+// Doctor Dashboard Imports
+import DoctorDashboardLayout from "./pages/doctor/DoctorDashboardLayout";
+import DoctorOverview from "./pages/doctor/DoctorOverview";
+import DoctorAppointments from "./pages/doctor/DoctorAppointments";
+import DoctorProfileEdit from "./pages/doctor/DoctorProfileEdit";
+import DoctorFinancial from "./pages/doctor/DoctorFinancial";
+import DoctorReviews from "./pages/doctor/DoctorReviews";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -39,12 +49,22 @@ const App = () => (
             <Route path="/cadastro/medico" element={<DoctorRegistration />} />
             <Route path="/cadastro/afiliado" element={<AffiliateRegistration />} />
           </Route>
-          <Route path="/dashboard/afiliado" element={<AffiliateDashboardLayout />}>
-            <Route index element={<AffiliateOverview />} />
-            <Route path="links" element={<AffiliateGenerateLinks />} />
-            <Route path="meus-links" element={<AffiliateMyLinks />} />
-            <Route path="comissoes" element={<AffiliateCommissions />} />
-            <Route path="saques" element={<AffiliatePayouts />} />
+          <Route element={<ProtectedRoute />}>
+            <Route path="/dashboard/afiliado" element={<AffiliateDashboardLayout />}>
+              <Route index element={<AffiliateOverview />} />
+              <Route path="links" element={<AffiliateGenerateLinks />} />
+              <Route path="meus-links" element={<AffiliateMyLinks />} />
+              <Route path="comissoes" element={<AffiliateCommissions />} />
+              <Route path="saques" element={<AffiliatePayouts />} />
+            </Route>
+
+            <Route path="/dashboard/medico" element={<DoctorDashboardLayout />}>
+              <Route index element={<DoctorOverview />} />
+              <Route path="agendamentos" element={<DoctorAppointments />} />
+              <Route path="perfil" element={<DoctorProfileEdit />} />
+              <Route path="financeiro" element={<DoctorFinancial />} />
+              <Route path="avaliacoes" element={<DoctorReviews />} />
+            </Route>
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>

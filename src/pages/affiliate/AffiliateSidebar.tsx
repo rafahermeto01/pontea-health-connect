@@ -36,16 +36,16 @@ export default function AffiliateSidebar({ affiliateName }: { affiliateName: str
   };
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-border">
-      <SidebarContent>
+    <Sidebar collapsible="icon" className="border-r border-slate-800 bg-slate-900 text-slate-100">
+      <SidebarContent className="bg-[#0F172A]">
         {!collapsed && (
-          <div className="px-4 py-4 border-b border-border">
-            <p className="text-xs text-muted-foreground">Afiliado</p>
-            <p className="text-sm font-semibold text-foreground truncate">{affiliateName ?? "—"}</p>
+          <div className="px-4 py-4 border-b border-slate-800">
+            <p className="text-xs text-slate-400">Afiliado</p>
+            <p className="text-sm font-semibold text-slate-100 truncate">{affiliateName ?? "—"}</p>
           </div>
         )}
         <SidebarGroup>
-          <SidebarGroupLabel>Menu</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-slate-400">Menu</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {items.map((item) => {
@@ -56,10 +56,14 @@ export default function AffiliateSidebar({ affiliateName }: { affiliateName: str
                       <NavLink
                         to={item.url}
                         end
-                        className={`hover:bg-primary/10 ${active ? "bg-primary/10 border-l-2 border-primary text-primary font-medium" : ""}`}
-                        activeClassName="bg-primary/10 text-primary font-medium border-l-2 border-primary"
+                        className={`hover:bg-[#0D9488]/10 text-slate-200 transition-colors ${
+                          active 
+                            ? "bg-[#0D9488]/10 border-l-2 border-[#0D9488] text-[#0D9488] font-medium" 
+                            : "border-l-2 border-transparent"
+                        }`}
+                        activeClassName="bg-[#0D9488]/10 text-[#0D9488] font-medium border-[#0D9488]"
                       >
-                        <item.icon className="mr-2 h-4 w-4" />
+                        <item.icon className={`mr-2 h-4 w-4 ${active ? "text-[#0D9488]" : "text-slate-400"}`} />
                         {!collapsed && <span>{item.title}</span>}
                       </NavLink>
                     </SidebarMenuButton>
@@ -70,8 +74,8 @@ export default function AffiliateSidebar({ affiliateName }: { affiliateName: str
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter>
-        <Button variant="ghost" size="sm" onClick={handleLogout} className="w-full justify-start text-muted-foreground hover:text-foreground">
+      <SidebarFooter className="bg-[#0F172A] border-t border-slate-800">
+        <Button variant="ghost" size="sm" onClick={handleLogout} className="w-full justify-start text-slate-400 hover:text-slate-200 hover:bg-slate-800">
           <LogOut className="mr-2 h-4 w-4" />
           {!collapsed && "Sair"}
         </Button>

@@ -153,7 +153,7 @@ export function useFilterOptions() {
 
       if (specRes.data) {
         const unique = [...new Set(specRes.data.map((d) => d.specialty).filter(Boolean))] as string[];
-        setSpecialties(unique);
+        setSpecialties(unique.sort((a, b) => a.localeCompare(b)));
       }
 
       if (cityRes.data) {
@@ -166,7 +166,7 @@ export function useFilterOptions() {
             unique.push({ city: d.city, state: d.state ?? "" });
           }
         }
-        setCities(unique);
+        setCities(unique.sort((a, b) => a.city.localeCompare(b.city)));
       }
     }
     load();

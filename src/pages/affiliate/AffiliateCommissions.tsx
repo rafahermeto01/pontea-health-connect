@@ -1,120 +1,132 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useOutletContext } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
-import type { AffiliateData } from "@/hooks/useAffiliate";
-import { Loader2 } from "lucide-react";
-
-function formatBRL(cents: number) {
-  return (cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-}
-
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("pt-BR");
-}
-
-function statusBadge(status: string | null) {
-  switch (status) {
-    case "completed":
-      return <Badge className="bg-green-500/20 text-green-400 hover:bg-green-500/30">Concluído</Badge>;
-    case "cancelled":
-      return <Badge className="bg-red-500/20 text-red-400 hover:bg-red-500/30">Cancelado</Badge>;
-    default:
-      return <Badge className="bg-yellow-500/20 text-yellow-400 hover:bg-yellow-500/30">Pendente</Badge>;
-  }
-}
-
-interface CommissionRow {
-  created_at: string;
-  doctor_name: string;
-  patient_name: string | null;
-  price_cents: number;
-  commission_cents: number;
-  status: string | null;
-}
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { DollarSign } from "lucide-react";
 
 export default function AffiliateCommissions() {
-  const { affiliate } = useOutletContext<{ affiliate: AffiliateData }>();
-  const [rows, setRows] = useState<CommissionRow[]>([]);
+  const { affiliate } = useOutletContext<{ affiliate: any }>();
+  const [commissions, setCommissions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function load() {
-      // Fetch appointments with doctor info
-      const { data: appts } = await supabase
+    async function fetchCommissions() {
+      // appointments joined with doctors
+      const { data } = await supabase
         .from("appointments")
-        .select("created_at, patient_name, price_cents, affiliate_commission_cents, status, doctor_id")
+        .select("created_at, patient_name, price_cents, affiliate_commission_cents, status, doctors(full_name)")
         .eq("affiliate_id", affiliate.id)
         .order("created_at", { ascending: false });
 
-      if (!appts || appts.length === 0) { setLoading(false); return; }
-
-      // Fetch doctor names
-      const doctorIds = [...new Set(appts.map((a) => a.doctor_id).filter(Boolean))] as string[];
-      const { data: doctors } = await supabase
-        .from("doctors")
-        .select("id, full_name")
-        .in("id", doctorIds);
-
-      const doctorMap: Record<string, string> = {};
-      doctors?.forEach((d) => { doctorMap[d.id] = d.full_name ?? "—"; });
-
-      setRows(
-        appts.map((a) => ({
-          created_at: a.created_at ?? "",
-          doctor_name: a.doctor_id ? doctorMap[a.doctor_id] ?? "—" : "—",
-          patient_name: a.patient_name,
-          price_cents: a.price_cents ?? 0,
-          commission_cents: a.affiliate_commission_cents ?? 0,
-          status: a.status,
-        }))
-      );
+      setCommissions(data || []);
       setLoading(false);
     }
-    load();
+    
+    fetchCommissions();
   }, [affiliate.id]);
 
+  const formatBRL = (cents: number) => {
+    if (!cents) return "R$ 0,00";
+    return (cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  };
+
+  const getFirstName = (fullName: string) => {
+    if (!fullName) return "—";
+    return fullName.split(" ")[0];
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "completed":
+        return <Badge className="bg-emerald-500/20 text-emerald-500 hover:bg-emerald-500/30 border-0">Concluído</Badge>;
+      case "pending":
+        return <Badge className="bg-amber-500/20 text-amber-500 hover:bg-amber-500/30 border-0">Pendente</Badge>;
+      case "cancelled":
+        return <Badge className="bg-red-500/20 text-red-500 hover:bg-red-500/30 border-0">Cancelado</Badge>;
+      case "no_show":
+        return <Badge className="bg-slate-500/20 text-slate-400 hover:bg-slate-500/30 border-0">Faltou</Badge>;
+      default:
+        return <Badge variant="outline" className="text-slate-400 border-slate-700">{status}</Badge>;
+    }
+  };
+
   return (
-    <Card className="bg-card border-border">
-      <CardHeader>
-        <CardTitle className="text-foreground">Comissões</CardTitle>
-      </CardHeader>
-      <CardContent>
-        {loading ? (
-          <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
-        ) : rows.length === 0 ? (
-          <p className="text-sm text-muted-foreground py-8 text-center">Nenhuma comissão registrada ainda.</p>
-        ) : (
-          <div className="overflow-x-auto">
+    <div className="space-y-6 text-slate-100">
+      <div>
+        <h2 className="text-2xl font-bold tracking-tight text-white">Comissões Recebidas</h2>
+        <p className="text-slate-400">Acompanhe todas as consultas geradas pelos seus links e as respectivas recompensas.</p>
+      </div>
+
+      <Card className="bg-[#1E293B] border-slate-800">
+        <CardHeader>
+          <div className="flex items-center space-x-2">
+            <DollarSign className="h-5 w-5 text-[#0D9488]" />
+            <CardTitle className="text-white">Histórico de Indicações</CardTitle>
+          </div>
+          <CardDescription className="text-slate-400">
+            A comissão em status "Concluído" já está liberada no seu saldo.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="rounded-md border border-slate-700 bg-[#0F172A] overflow-hidden">
             <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Data</TableHead>
-                  <TableHead>Médico</TableHead>
-                  <TableHead>Paciente</TableHead>
-                  <TableHead className="text-right">Consulta</TableHead>
-                  <TableHead className="text-right">Comissão</TableHead>
-                  <TableHead>Status</TableHead>
+              <TableHeader className="bg-[#1E293B] border-b border-slate-700">
+                <TableRow className="border-b border-slate-700 hover:bg-transparent">
+                  <TableHead className="text-slate-300">Data</TableHead>
+                  <TableHead className="text-slate-300">Médico</TableHead>
+                  <TableHead className="text-slate-300">Paciente</TableHead>
+                  <TableHead className="text-right text-slate-300">Valor Consulta</TableHead>
+                  <TableHead className="text-right text-slate-300">Sua Comissão</TableHead>
+                  <TableHead className="text-slate-300">Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {rows.map((r, i) => (
-                  <TableRow key={i}>
-                    <TableCell>{formatDate(r.created_at)}</TableCell>
-                    <TableCell>{r.doctor_name}</TableCell>
-                    <TableCell>{r.patient_name?.split(" ")[0] ?? "—"}</TableCell>
-                    <TableCell className="text-right">{formatBRL(r.price_cents)}</TableCell>
-                    <TableCell className="text-right font-medium text-primary">{formatBRL(r.commission_cents)}</TableCell>
-                    <TableCell>{statusBadge(r.status)}</TableCell>
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center text-slate-500 py-8">Carregando comissões...</TableCell>
                   </TableRow>
-                ))}
+                ) : commissions.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center text-slate-500 py-8">Nenhuma indicação registrada.</TableCell>
+                  </TableRow>
+                ) : (
+                  commissions.map((row, i) => (
+                    <TableRow key={i} className="border-b border-slate-800 hover:bg-slate-800/50">
+                      <TableCell className="text-slate-300">
+                        {new Date(row.created_at).toLocaleDateString("pt-BR")}
+                      </TableCell>
+                      <TableCell className="text-white font-medium">
+                        {row.doctors?.full_name || "—"}
+                      </TableCell>
+                      <TableCell className="text-slate-300">
+                        {getFirstName(row.patient_name)}
+                      </TableCell>
+                      <TableCell className="text-right text-slate-400">
+                        {formatBRL(row.price_cents)}
+                      </TableCell>
+                      <TableCell className="text-right font-medium text-emerald-400">
+                        {formatBRL(row.affiliate_commission_cents)}
+                      </TableCell>
+                      <TableCell>
+                        {getStatusBadge(row.status)}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </div>
-        )}
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

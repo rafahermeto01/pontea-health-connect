@@ -1,113 +1,167 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useOutletContext } from "react-router-dom";
-import { MousePointerClick, CalendarCheck, TrendingUp, Wallet } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
-import type { AffiliateData } from "@/hooks/useAffiliate";
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from "recharts";
-
-function formatBRL(cents: number) {
-  return (cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-}
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { MousePointerClick, CalendarCheck, Percent, DollarSign } from "lucide-react";
+import { format, subDays, startOfDay } from "date-fns";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Legend
+} from "recharts";
 
 export default function AffiliateOverview() {
-  const { affiliate } = useOutletContext<{ affiliate: AffiliateData }>();
-  const [clicks, setClicks] = useState(0);
-  const [appointments, setAppointments] = useState(0);
-  const [chartData, setChartData] = useState<{ dia: string; cliques: number; agendamentos: number }[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { affiliate } = useOutletContext<{ affiliate: any }>();
+  const [metrics, setMetrics] = useState({ clicks: 0, appointments: 0 });
+  const [chartData, setChartData] = useState<any[]>([]);
 
   useEffect(() => {
-    async function load() {
-      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-
-      const [clicksRes, appointmentsRes, clicksByDay, appointmentsByDay] = await Promise.all([
-        supabase.from("referral_clicks").select("id", { count: "exact", head: true }).eq("affiliate_id", affiliate.id),
-        supabase.from("appointments").select("id", { count: "exact", head: true }).eq("affiliate_id", affiliate.id),
-        supabase.from("referral_clicks").select("created_at").eq("affiliate_id", affiliate.id).gte("created_at", thirtyDaysAgo),
-        supabase.from("appointments").select("created_at").eq("affiliate_id", affiliate.id).gte("created_at", thirtyDaysAgo),
+    async function loadData() {
+      // 1. Total Metrics
+      const [{ count: clicksCount }, { count: appointmentsCount }] = await Promise.all([
+        supabase.from("referral_clicks").select("*", { count: "exact", head: true }).eq("affiliate_id", affiliate.id),
+        supabase.from("appointments").select("*", { count: "exact", head: true }).eq("affiliate_id", affiliate.id)
       ]);
 
-      setClicks(clicksRes.count ?? 0);
-      setAppointments(appointmentsRes.count ?? 0);
+      setMetrics({
+        clicks: clicksCount || 0,
+        appointments: appointmentsCount || 0
+      });
 
-      // Build chart data
-      const dayMap: Record<string, { cliques: number; agendamentos: number }> = {};
+      // 2. Chart Data (Last 30 days)
+      const thirtyDaysAgo = startOfDay(subDays(new Date(), 30)).toISOString();
+      const [{ data: clicksData }, { data: appsData }] = await Promise.all([
+        supabase.from("referral_clicks").select("created_at").eq("affiliate_id", affiliate.id).gte("created_at", thirtyDaysAgo),
+        supabase.from("appointments").select("created_at").eq("affiliate_id", affiliate.id).gte("created_at", thirtyDaysAgo)
+      ]);
+
+      // Group by day
+      const daysMap: Record<string, { name: string; clicks: number; appointments: number }> = {};
+      
+      // Initialize last 30 days
       for (let i = 29; i >= 0; i--) {
-        const d = new Date(Date.now() - i * 24 * 60 * 60 * 1000);
-        const key = d.toISOString().slice(0, 10);
-        dayMap[key] = { cliques: 0, agendamentos: 0 };
+        const d = subDays(new Date(), i);
+        const dayStr = format(d, "yyyy-MM-dd");
+        const niceStr = format(d, "dd/MM");
+        daysMap[dayStr] = { name: niceStr, clicks: 0, appointments: 0 };
       }
 
-      clicksByDay.data?.forEach((r) => {
-        const key = r.created_at?.slice(0, 10);
-        if (key && dayMap[key]) dayMap[key].cliques++;
+      clicksData?.forEach(item => {
+        const dayStr = item.created_at.substring(0, 10);
+        if (daysMap[dayStr]) daysMap[dayStr].clicks += 1;
       });
 
-      appointmentsByDay.data?.forEach((r) => {
-        const key = r.created_at?.slice(0, 10);
-        if (key && dayMap[key]) dayMap[key].agendamentos++;
+      appsData?.forEach(item => {
+        const dayStr = item.created_at.substring(0, 10);
+        if (daysMap[dayStr]) daysMap[dayStr].appointments += 1;
       });
 
-      setChartData(
-        Object.entries(dayMap).map(([dia, vals]) => ({
-          dia: dia.slice(5), // MM-DD
-          ...vals,
-        }))
-      );
-
-      setLoading(false);
+      setChartData(Object.values(daysMap));
     }
-    load();
+    loadData();
   }, [affiliate.id]);
 
-  const conversionRate = clicks > 0 ? ((appointments / clicks) * 100).toFixed(1) : "0.0";
-
-  const metrics = [
-    { label: "Cliques", value: clicks, icon: MousePointerClick, color: "text-primary" },
-    { label: "Agendamentos", value: appointments, icon: CalendarCheck, color: "text-green-500" },
-    { label: "Taxa de Conversão", value: `${conversionRate}%`, icon: TrendingUp, color: "text-yellow-500" },
-    { label: "Saldo Disponível", value: formatBRL(affiliate.balance_cents ?? 0), icon: Wallet, color: "text-primary" },
-  ];
+  const conversionRate = metrics.clicks > 0 ? ((metrics.appointments / metrics.clicks) * 100).toFixed(1) : "0.0";
+  const formattedBalance = ((affiliate.balance_cents || 0) / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
   return (
-    <div className="space-y-6">
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {metrics.map((m) => (
-          <Card key={m.label} className="bg-card border-border">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">{m.label}</CardTitle>
-              <m.icon className={`h-5 w-5 ${m.color}`} />
-            </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold text-foreground">{loading ? "..." : m.value}</p>
-            </CardContent>
-          </Card>
-        ))}
+    <div className="space-y-8 bg-[#0F172A] min-h-full p-4 rounded-xl text-slate-100">
+      <div>
+        <h2 className="text-2xl font-bold tracking-tight text-white">Visão Geral</h2>
+        <p className="text-slate-400">Acompanhe seu desempenho em tempo real.</p>
       </div>
 
-      <Card className="bg-card border-border">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card className="bg-[#1E293B] border-slate-800 text-white">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-slate-400">Total de Cliques</CardTitle>
+            <MousePointerClick className="h-4 w-4 text-[#0D9488]" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{metrics.clicks}</div>
+          </CardContent>
+        </Card>
+        <Card className="bg-[#1E293B] border-slate-800 text-white">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-slate-400">Agendamentos</CardTitle>
+            <CalendarCheck className="h-4 w-4 text-[#22C55E]" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{metrics.appointments}</div>
+          </CardContent>
+        </Card>
+        <Card className="bg-[#1E293B] border-slate-800 text-white">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-slate-400">Taxa de Conversão</CardTitle>
+            <Percent className="h-4 w-4 text-blue-400" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{conversionRate}%</div>
+          </CardContent>
+        </Card>
+        <Card className="bg-[#1E293B] border-slate-800 text-white">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-slate-400">Saldo Disponível</CardTitle>
+            <DollarSign className="h-4 w-4 text-emerald-400" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{formattedBalance}</div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card className="bg-[#1E293B] border-slate-800">
         <CardHeader>
-          <CardTitle className="text-foreground">Últimos 30 dias</CardTitle>
+          <CardTitle className="text-lg text-white">Cliques e Agendamentos (Últimos 30 Dias)</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="h-64">
+        <CardContent className="pt-4">
+          <div className="h-[350px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="dia" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }} />
-                <YAxis tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }} allowDecimals={false} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "hsl(var(--card))",
-                    border: "1px solid hsl(var(--border))",
-                    borderRadius: "8px",
-                    color: "hsl(var(--foreground))",
-                  }}
+              <LineChart data={chartData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
+                <XAxis 
+                  dataKey="name" 
+                  stroke="#94a3b8" 
+                  fontSize={12} 
+                  tickLine={false}
+                  axisLine={false}
+                  dy={10}
                 />
-                <Legend />
-                <Line type="monotone" dataKey="cliques" stroke="#0D9488" strokeWidth={2} dot={false} name="Cliques" />
-                <Line type="monotone" dataKey="agendamentos" stroke="#22C55E" strokeWidth={2} dot={false} name="Agendamentos" />
+                <YAxis 
+                  stroke="#94a3b8" 
+                  fontSize={12}
+                  tickLine={false}
+                  axisLine={false}
+                  dx={-10}
+                />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: '#0F172A', borderColor: '#334155', color: '#fff' }}
+                  itemStyle={{ color: '#fff' }}
+                />
+                <Legend iconType="circle" wrapperStyle={{ paddingTop: "20px" }}/>
+                <Line 
+                  name="Cliques"
+                  type="monotone" 
+                  dataKey="clicks" 
+                  stroke="#0D9488" 
+                  strokeWidth={3}
+                  dot={{ r: 4, strokeWidth: 2 }}
+                  activeDot={{ r: 6 }}
+                />
+                <Line 
+                  name="Agendamentos"
+                  type="monotone" 
+                  dataKey="appointments" 
+                  stroke="#22C55E" 
+                  strokeWidth={3}
+                  dot={{ r: 4, strokeWidth: 2 }}
+                  activeDot={{ r: 6 }}
+                />
               </LineChart>
             </ResponsiveContainer>
           </div>

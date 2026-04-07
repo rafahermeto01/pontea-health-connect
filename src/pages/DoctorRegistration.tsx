@@ -28,7 +28,7 @@ export default function DoctorRegistration() {
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: form.email,
         password: form.password,
-        options: { data: { full_name: form.fullName }, emailRedirectTo: window.location.origin },
+        options: { data: { full_name: form.fullName, user_type: 'doctor' }, emailRedirectTo: window.location.origin },
       });
       if (authError) throw authError;
 
@@ -42,21 +42,22 @@ export default function DoctorRegistration() {
       const { error: docError } = await supabase.from("doctors").insert({
         user_id: userId,
         full_name: form.fullName,
+        slug,
         crm_number: form.crm,
         crm_state: form.uf,
         specialty: form.specialty,
+        bio: form.bio,
+        consultation_price: Number(form.consultationPrice) * 100,
         city: form.city,
+        state: form.uf,
         phone: form.phone,
-        consultation_price: Number(form.consultationPrice),
         calendar_link: form.calendarLink,
         accepts_online: form.isOnline,
-        bio: form.bio,
-        slug,
       });
       if (docError) throw docError;
 
-      toast.success("Cadastro realizado! Verifique seu email.");
-      navigate("/login");
+      toast.success("Cadastro realizado com sucesso!");
+      navigate("/dashboard/medico");
     } catch (err: any) {
       toast.error(err.message || "Erro no cadastro");
     } finally {

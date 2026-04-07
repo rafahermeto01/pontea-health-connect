@@ -25,27 +25,34 @@ export default function AffiliateRegistration() {
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: form.email,
         password: form.password,
-        options: { data: { full_name: form.fullName }, emailRedirectTo: window.location.origin },
+        options: { data: { full_name: form.fullName, user_type: 'affiliate' }, emailRedirectTo: window.location.origin },
       });
       if (authError) throw authError;
 
       const userId = authData.user?.id;
       if (!userId) throw new Error("Erro ao criar usuário");
 
+      const firstName = form.fullName.trim().split(" ")[0].toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "");
+      const randomStr = Math.random().toString(36).substring(2, 6);
+      const refCode = `${firstName}_${randomStr}`;
+
       const { error: affError } = await supabase.from("affiliates").insert({
-        id: userId,
         user_id: userId,
         full_name: form.fullName,
         document: form.cpfCnpj,
         niche: form.niche,
         instagram_handle: form.instagram,
         followers_count: Number(form.followers) || null,
-        ref_code: form.fullName.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, ""),
+        ref_code: refCode,
+        commission_rate: 10,
+        balance_cents: 0,
+        total_earned_cents: 0,
+        status: 'approved'
       });
       if (affError) throw affError;
 
-      toast.success("Cadastro realizado! Verifique seu email.");
-      navigate("/login");
+      toast.success("Cadastro realizado com sucesso!");
+      navigate("/dashboard/afiliado");
     } catch (err: any) {
       toast.error(err.message || "Erro no cadastro");
     } finally {
