@@ -6,7 +6,9 @@ export default function Footer() {
       <div className="container py-16">
         <div className="grid gap-12 sm:grid-cols-2 lg:grid-cols-4">
           <div className="space-y-4">
-            <h3 className="text-2xl font-heading font-bold text-white">Pontea</h3>
+            <Link to="/">
+              <img src="/logo-pontea.png" alt="Pontea" className="h-8 w-auto brightness-0 invert" />
+            </Link>
             <p className="text-sm leading-relaxed text-slate-400">
               A tecnologia que aproxima médicos e pacientes, facilitando o acesso à saúde de qualidade em todo o Brasil.
             </p>

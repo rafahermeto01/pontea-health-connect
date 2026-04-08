@@ -40,9 +40,9 @@ export default function AffiliateSidebar({ affiliateName }: { affiliateName: str
       <SidebarContent>
         <div className="flex items-center px-6 py-6 border-b border-slate-100">
           {!collapsed ? (
-            <span className="font-heading font-bold text-xl text-teal-600 tracking-tight">Pontea</span>
+            <img src="/logo-pontea.png" alt="Pontea" className="h-8 w-auto" />
           ) : (
-            <span className="font-heading font-bold text-xl text-teal-600 mx-auto tracking-tight">P</span>
+            <img src="/logo-pontea.png" alt="Pontea" className="h-8 w-auto mx-auto" />
           )}
         </div>
         <SidebarGroup>

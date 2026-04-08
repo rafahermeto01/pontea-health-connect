@@ -37,7 +37,8 @@ export default function LoginPage() {
   return (
     <div className="container flex min-h-[70vh] items-center justify-center py-12">
       <div className="w-full max-w-md rounded-lg border border-border bg-card p-8">
-        <h1 className="mb-6 text-center text-2xl font-bold text-foreground">Entrar na Pontea</h1>
+        <img src="/logo-pontea.png" alt="Pontea" className="h-12 w-auto mx-auto mb-6" />
+        <h1 className="mb-6 text-center text-2xl font-bold text-foreground">Entrar na plataforma</h1>
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
             <Label htmlFor="email">Email</Label>

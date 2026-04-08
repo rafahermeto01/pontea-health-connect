@@ -16,8 +16,8 @@ export default function Navbar() {
   return (
     <nav className="sticky top-0 z-50 border-b border-slate-100 bg-white/80 shadow-sm backdrop-blur-md">
       <div className="container flex h-16 items-center justify-between">
-        <Link to="/" className="text-2xl font-heading font-extrabold tracking-tight text-primary">
-          Pontea
+        <Link to="/" className="flex items-center gap-2 group transition-transform hover:scale-105">
+          <img src="/logo-pontea.png" alt="Pontea - Saúde que Conecta" className="h-10 w-auto" />
         </Link>
 
         {/* Desktop */}
