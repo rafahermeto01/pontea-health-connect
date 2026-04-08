@@ -13,27 +13,29 @@ import {
   ShieldCheck, 
   Star, 
   ChevronRight,
-  CheckCircle2
+  CheckCircle2,
+  Search,
+  UserPlus
 } from "lucide-react";
 
 const howItWorks = [
   { 
     id: "01",
-    title: "Encontre seu Médico", 
-    desc: "Procure por especialidade, localização ou nome. Filtre por quem aceita seu convênio.",
-    icon: Stethoscope 
+    title: "Influenciadores Indicam", 
+    desc: "Profissionais de saúde, fitness e bem-estar recomendam a Pontea para seus seguidores e ganham comissão por cada consulta agendada.",
+    icon: Users 
   },
   { 
     id: "02",
-    title: "Compare Avaliações", 
-    desc: "Veja a experiência real de outros pacientes para escolher com total segurança.",
-    icon: Star 
+    title: "Pacientes Encontram", 
+    desc: "Você acessa o marketplace, filtra por especialidade, cidade e preço, compara avaliações e escolhe o médico ideal para sua necessidade.",
+    icon: Search 
   },
   { 
     id: "03",
-    title: "Agende Online", 
-    desc: "Escolha o melhor horário na agenda do médico e confirme em segundos.",
-    icon: CalendarCheck 
+    title: "Médicos Atendem", 
+    desc: "Profissionais verificados com CRM recebem novos pacientes qualificados sem precisar investir em marketing próprio.",
+    icon: Stethoscope 
   },
 ];
 
@@ -47,14 +49,11 @@ const specialtiesData = [
 ];
 
 const features = [
-  { title: "Médicos Verificados", desc: "Todos os profissionais possuem CRM ativo e histórico verificado.", icon: ShieldCheck },
-  { title: "Avaliações Reais", desc: "Feedback autêntico de pacientes que realmente realizaram consultas.", icon: Star },
-  { title: "Agendamento 24h", desc: "Marque sua consulta a qualquer hora, de qualquer lugar, pelo celular.", icon: CalendarCheck },
-  { title: "Programa de Indicação", desc: "Ganhe benefícios ao indicar novos pacientes ou médicos parceiros.", icon: UserPlus },
+  { title: "Médicos com CRM Verificado", desc: "Todos os profissionais passam por validação de registro no conselho.", icon: ShieldCheck },
+  { title: "Indicações de Confiança", desc: "Chegue aos melhores médicos através de quem você já confia.", icon: Users },
+  { title: "Avaliações Reais", desc: "Veja a experiência de outros pacientes antes de agendar.", icon: Star },
+  { title: "Agendamento Direto", desc: "Escolha data e horário diretamente na agenda do médico.", icon: CalendarCheck },
 ];
-
-// Reusing UserPlus from Lucide
-import { UserPlus } from "lucide-react";
 
 export default function LandingPage() {
   return (
@@ -72,12 +71,12 @@ export default function LandingPage() {
           </div>
           
           <h1 className="mx-auto max-w-4xl font-heading text-5xl font-extrabold tracking-tight text-slate-900 md:text-7xl">
-            A ponte entre você e seu <br />
-            <span className="bg-gradient-to-r from-teal-600 to-cyan-600 bg-clip-text text-transparent">médico ideal</span>
+            Encontre o médico ideal, <br />
+            <span className="bg-gradient-to-r from-teal-600 to-cyan-600 bg-clip-text text-transparent">indicado por quem você confia</span>
           </h1>
           
           <p className="mx-auto mt-8 max-w-2xl text-xl text-slate-500 leading-relaxed">
-            Agende consultas com os melhores especialistas, veja avaliações reais e gerencie sua saúde de forma simples e segura.
+            A Pontea conecta você a médicos verificados através de indicações de profissionais de saúde e bem-estar que você já segue. Agende sua consulta com segurança.
           </p>
           
           <div className="mt-12 flex flex-wrap justify-center gap-4">
@@ -189,12 +188,11 @@ export default function LandingPage() {
             
             <div className="relative">
               <div className="absolute -inset-4 rounded-3xl bg-teal-100/50 blur-2xl" />
-              <div className="relative aspect-square overflow-hidden rounded-3xl border-8 border-white bg-slate-50 shadow-2xl">
-                <img 
-                  src="https://images.unsplash.com/photo-1576091160550-217359f4ecf8?auto=format&fit=crop&q=80&w=800" 
-                  alt="Doctor at work" 
-                  className="h-full w-full object-cover"
-                />
+              <div className="relative aspect-square overflow-hidden rounded-3xl border-8 border-white bg-slate-50 shadow-2xl flex items-center justify-center">
+                <div className="relative flex items-center justify-center">
+                  <Stethoscope className="absolute h-64 w-64 text-teal-600 opacity-10" strokeWidth={1} />
+                  <Heart className="h-24 w-24 text-teal-500 opacity-80 z-10" fill="currentColor" />
+                </div>
               </div>
             </div>
           </div>
@@ -205,10 +203,10 @@ export default function LandingPage() {
       <section className="container py-24">
         <div className="rounded-[32px] bg-primary px-8 py-16 text-center text-white shadow-2xl shadow-teal-900/20 md:px-16 md:py-24">
           <h2 className="mx-auto max-w-2xl font-heading text-4xl font-black md:text-5xl leading-tight">
-            Pronto para encontrar o médico certo para você?
+            Encontre seu médico agora
           </h2>
           <p className="mx-auto mt-6 max-w-xl text-lg text-teal-50 opacity-90">
-            Junte-se a milhares de pacientes que já transformaram seu acesso à saúde com a Pontea.
+            Milhares de profissionais verificados esperando por você.
           </p>
           <div className="mt-10">
             <Link to="/buscar">

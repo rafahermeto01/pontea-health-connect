@@ -3,9 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Check, TrendingUp, Users, Shield } from "lucide-react";
 
 const benefits = [
-  { icon: TrendingUp, text: "Aumente sua visibilidade e alcance novos pacientes" },
-  { icon: Users, text: "Indicações de influenciadores fitness com audiência qualificada" },
-  { icon: Shield, text: "Perfil verificado com selo de confiança Pontea" },
+  { icon: TrendingUp, text: "Pacientes que chegam já motivados e informados" },
+  { icon: Users, text: "Sem custo por clique — pague apenas a mensalidade" },
+  { icon: Shield, text: "Perfil profissional com CRM verificado e avaliações" },
+  { icon: Check, text: "Agenda integrada com Cal.com, Calendly ou WhatsApp" },
 ];
 
 const plans = [
@@ -23,11 +24,11 @@ export default function ForDoctorsPage() {
   return (
     <div className="container py-16">
       <div className="mx-auto max-w-3xl text-center">
-        <h1 className="text-3xl font-extrabold text-foreground sm:text-4xl">
-          Cresça sua prática com a <span className="text-primary">Pontea</span>
+        <h1 className="text-3xl font-extrabold text-foreground sm:text-4xl text-slate-900 font-heading">
+          Receba pacientes qualificados <span className="text-primary block mt-2">sem gastar com marketing</span>
         </h1>
-        <p className="mt-4 text-lg text-muted-foreground">
-          Conecte-se com pacientes indicados por influenciadores de confiança
+        <p className="mt-4 text-lg text-slate-500">
+          Na Pontea, influenciadores e profissionais de saúde indicam a plataforma para milhares de seguidores. Você só precisa cadastrar seu perfil e atender.
         </p>
       </div>
 

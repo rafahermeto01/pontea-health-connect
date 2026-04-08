@@ -6,10 +6,10 @@ import { Slider } from "@/components/ui/slider";
 import { DollarSign, Share2, TrendingUp, Zap } from "lucide-react";
 
 const benefits = [
-  { icon: DollarSign, title: "Comissão por Consulta", desc: "Ganhe até 10% por cada consulta agendada via seu link." },
-  { icon: Share2, title: "Links Personalizados", desc: "Compartilhe links rastreáveis para cada médico do catálogo." },
-  { icon: TrendingUp, title: "Dashboard Completo", desc: "Acompanhe cliques, conversões e ganhos em tempo real." },
-  { icon: Zap, title: "Pagamento Rápido", desc: "Receba seus ganhos via PIX com saque mínimo de R$50." },
+  { icon: DollarSign, title: "Comissão Direta", desc: "Comissão por cada consulta agendada pelo seu link." },
+  { icon: Share2, title: "Links Únicos", desc: "Links personalizados por especialidade e cidade." },
+  { icon: TrendingUp, title: "Dashboard Transparente", desc: "Painel completo com cliques, conversões e ganhos em tempo real." },
+  { icon: Zap, title: "Saque na Hora", desc: "Saques via PIX quando quiser." },
 ];
 
 export default function ForAffiliatesPage() {
@@ -22,11 +22,11 @@ export default function ForAffiliatesPage() {
   return (
     <div className="container py-16">
       <div className="mx-auto max-w-3xl text-center">
-        <h1 className="text-3xl font-extrabold text-foreground sm:text-4xl">
-          Monetize sua audiência com a <span className="text-primary">Pontea</span>
+        <h1 className="text-3xl font-extrabold text-slate-900 sm:text-4xl font-heading">
+          Monetize sua audiência indicando <span className="text-primary block mt-2">médicos de confiança</span>
         </h1>
-        <p className="mt-4 text-lg text-muted-foreground">
-          Indique médicos de confiança e ganhe comissão por cada consulta
+        <p className="mt-4 text-lg text-slate-500">
+          Se você é influenciador fitness, personal trainer, nutricionista ou coach de saúde, ganhe comissão por cada paciente que agendar uma consulta através do seu link.
         </p>
       </div>
 
@@ -48,23 +48,24 @@ export default function ForAffiliatesPage() {
         <h2 className="mb-6 text-center text-xl font-bold text-foreground">Simulador de Ganhos</h2>
         <div className="space-y-6">
           <div>
-            <label className="mb-2 block text-sm font-medium text-foreground">Seguidores</label>
+            <label className="mb-2 block text-sm font-medium text-slate-700">Seus seguidores</label>
             <Input
               type="number"
               value={followers}
               onChange={(e) => setFollowers(Number(e.target.value))}
               min={0}
+              className="bg-slate-50 border-slate-200 h-12 rounded-xl"
             />
           </div>
           <div>
-            <label className="mb-2 block text-sm font-medium text-foreground">
-              Taxa de Conversão: {conversionRate[0].toFixed(1)}%
+            <label className="mb-2 block text-sm font-medium text-slate-700">
+              Taxa de conversão estimada: {conversionRate[0].toFixed(1)}%
             </label>
-            <Slider min={0.1} max={5} step={0.1} value={conversionRate} onValueChange={setConversionRate} />
+            <Slider min={0.1} max={5} step={0.1} value={conversionRate} onValueChange={setConversionRate} className="[&_[role=slider]]:bg-teal-600 [&_[role=slider]]:border-teal-600 [&_.bg-primary]:bg-teal-600" />
           </div>
-          <div className="rounded-lg bg-primary/10 p-4 text-center">
-            <p className="text-sm text-muted-foreground">Ganho mensal estimado</p>
-            <p className="text-3xl font-extrabold text-primary">
+          <div className="rounded-2xl bg-teal-50 border border-teal-100 p-6 text-center mt-6">
+            <p className="text-sm font-medium text-teal-700 mb-1">Ganho mensal estimado</p>
+            <p className="text-4xl font-heading font-extrabold text-teal-600">
               {estimatedMonthly.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
             </p>
           </div>

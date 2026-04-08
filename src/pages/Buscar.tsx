@@ -314,7 +314,7 @@ export default function BuscarPage() {
             </div>
           )}
 
-          {!loading && hasMore && doctors.length > 0 && (
+          {!loading && hasMore && doctors.length > 0 && doctors.length < totalCount && (
             <div className="mt-12 text-center">
               <Button 
                 onClick={loadMore} 
@@ -322,6 +322,12 @@ export default function BuscarPage() {
               >
                 Carregar mais médicos
               </Button>
+            </div>
+          )}
+
+          {!loading && doctors.length > 0 && (!hasMore || doctors.length >= totalCount) && (
+            <div className="mt-12 text-center text-slate-400 font-medium pb-8">
+              Mostrando todos os {totalCount} médicos
             </div>
           )}
 
