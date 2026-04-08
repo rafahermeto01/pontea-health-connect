@@ -2,38 +2,46 @@ import { Link } from "react-router-dom";
 
 export default function Footer() {
   return (
-    <footer className="border-t border-border bg-card">
-      <div className="container py-12">
-        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-          <div>
-            <h3 className="mb-4 text-lg font-bold text-primary">Pontea</h3>
-            <p className="text-sm text-muted-foreground">A ponte entre você e seu médico ideal.</p>
+    <footer className="bg-slate-900 text-slate-300">
+      <div className="container py-16">
+        <div className="grid gap-12 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="space-y-4">
+            <h3 className="text-2xl font-heading font-bold text-white">Pontea</h3>
+            <p className="text-sm leading-relaxed text-slate-400">
+              A tecnologia que aproxima médicos e pacientes, facilitando o acesso à saúde de qualidade em todo o Brasil.
+            </p>
           </div>
           <div>
-            <h4 className="mb-3 text-sm font-semibold text-foreground">Pacientes</h4>
-            <div className="flex flex-col gap-2 text-sm text-muted-foreground">
-              <Link to="/buscar" className="hover:text-foreground">Buscar Médicos</Link>
-              <Link to="/" className="hover:text-foreground">Como Funciona</Link>
+            <h4 className="mb-6 font-heading font-semibold text-white">Pacientes</h4>
+            <div className="flex flex-col gap-3 text-sm">
+              <Link to="/buscar" className="transition-colors hover:text-primary">Encontrar Médico</Link>
+              <Link to="/" className="transition-colors hover:text-primary">Especialidades</Link>
+              <Link to="/" className="transition-colors hover:text-primary">Como Funciona</Link>
+              <Link to="/" className="transition-colors hover:text-primary">Avaliações</Link>
             </div>
           </div>
           <div>
-            <h4 className="mb-3 text-sm font-semibold text-foreground">Profissionais</h4>
-            <div className="flex flex-col gap-2 text-sm text-muted-foreground">
-              <Link to="/para-medicos" className="hover:text-foreground">Para Médicos</Link>
-              <Link to="/para-afiliados" className="hover:text-foreground">Para Afiliados</Link>
+            <h4 className="mb-6 font-heading font-semibold text-white">Profissionais</h4>
+            <div className="flex flex-col gap-3 text-sm">
+              <Link to="/para-medicos" className="transition-colors hover:text-primary">Pontea para Médicos</Link>
+              <Link to="/para-afiliados" className="transition-colors hover:text-primary">Programa de Afiliados</Link>
+              <Link to="/cadastro/medico" className="transition-colors hover:text-primary">Cadastrar Perfil</Link>
+              <Link to="/login" className="transition-colors hover:text-primary">Painel do Profissional</Link>
             </div>
           </div>
           <div>
-            <h4 className="mb-3 text-sm font-semibold text-foreground">Conta</h4>
-            <div className="flex flex-col gap-2 text-sm text-muted-foreground">
-              <Link to="/login" className="hover:text-foreground">Entrar</Link>
-              <Link to="/cadastro/medico" className="hover:text-foreground">Cadastro Médico</Link>
-              <Link to="/cadastro/afiliado" className="hover:text-foreground">Cadastro Afiliado</Link>
+            <h4 className="mb-6 font-heading font-semibold text-white">Contato</h4>
+            <div className="flex flex-col gap-3 text-sm text-slate-400">
+              <p>suporte@pontea.com.br</p>
+              <p>Segunda a Sexta, 09h às 18h</p>
+              <div className="mt-4 flex gap-4">
+                {/* Social placeholders could go here */}
+              </div>
             </div>
           </div>
         </div>
-        <div className="mt-8 border-t border-border pt-6 text-center text-xs text-muted-foreground">
-          © {new Date().getFullYear()} Pontea. Todos os direitos reservados.
+        <div className="mt-16 border-t border-slate-800 pt-8 text-center text-xs text-slate-500">
+          © {new Date().getFullYear()} Pontea Health. Todos os direitos reservados.
         </div>
       </div>
     </footer>

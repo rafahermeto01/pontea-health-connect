@@ -41,44 +41,50 @@ export default function DoctorFinancial() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold tracking-tight text-foreground">Relatório Financeiro</h2>
-        <p className="text-muted-foreground">Acompanhe seus rendimentos pelas consultas realizadas.</p>
+        <h2 className="font-heading text-2xl font-bold tracking-tight text-slate-900">Relatório Financeiro</h2>
+        <p className="text-slate-500 mt-1">Acompanhe seus rendimentos pelas consultas realizadas.</p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Valor Bruto Total</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+      <div className="grid gap-6 md:grid-cols-3">
+        <Card className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-6">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 p-0 mb-4">
+            <CardTitle className="text-xs uppercase tracking-wider text-slate-400 font-medium">Valor Bruto Total</CardTitle>
+            <div className="h-11 w-11 rounded-full bg-slate-50 flex items-center justify-center shrink-0">
+               <DollarSign className="h-5 w-5 text-slate-500" />
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatBRL(totalGross)}</div>
+          <CardContent className="p-0">
+            <div className="font-heading text-3xl font-bold text-slate-900">{formatBRL(totalGross)}</div>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-red-500">Taxas da Plataforma</CardTitle>
-            <WalletCards className="h-4 w-4 text-red-500/70" />
+        <Card className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-6">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 p-0 mb-4">
+            <CardTitle className="text-xs uppercase tracking-wider text-slate-400 font-medium">Taxas da Plataforma</CardTitle>
+            <div className="h-11 w-11 rounded-full bg-red-50 flex items-center justify-center shrink-0">
+              <WalletCards className="h-5 w-5 text-red-500" />
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-500">{formatBRL(totalFees)}</div>
+          <CardContent className="p-0">
+            <div className="font-heading text-3xl font-bold text-red-500">{formatBRL(totalFees)}</div>
           </CardContent>
         </Card>
-        <Card className="border-green-500/50 bg-green-500/5">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-green-600 dark:text-green-400">Total Líquido</CardTitle>
-            <DollarSign className="h-4 w-4 text-green-600 dark:text-green-400" />
+        <Card className="bg-emerald-50 rounded-2xl shadow-sm border border-emerald-200 p-6">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 p-0 mb-4">
+            <CardTitle className="text-xs uppercase tracking-wider text-emerald-700 font-medium">Total Líquido</CardTitle>
+            <div className="h-11 w-11 rounded-full bg-white flex items-center justify-center shrink-0 border border-emerald-100">
+               <DollarSign className="h-5 w-5 text-emerald-600" />
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600 dark:text-green-400">{formatBRL(totalNet)}</div>
+          <CardContent className="p-0">
+            <div className="font-heading text-3xl font-bold text-emerald-700">{formatBRL(totalNet)}</div>
           </CardContent>
         </Card>
       </div>
 
-      <div className="rounded-md border border-border mt-8">
+      <div className="rounded-2xl border border-slate-200/60 bg-white shadow-sm overflow-hidden mt-8">
         <Table>
-          <TableHeader>
-            <TableRow>
+          <TableHeader className="bg-slate-50 [&_th]:text-xs [&_th]:uppercase [&_th]:tracking-wider [&_th]:text-slate-500 [&_th]:font-medium border-b border-slate-100">
+            <TableRow className="hover:bg-transparent">
               <TableHead>Data</TableHead>
               <TableHead>Paciente</TableHead>
               <TableHead className="text-right">Valor Bruto</TableHead>
@@ -95,12 +101,12 @@ export default function DoctorFinancial() {
               </TableRow>
             ) : (
               appointments.map((app) => (
-                <TableRow key={app.id}>
-                  <TableCell>{new Date(app.created_at).toLocaleDateString("pt-BR")}</TableCell>
-                  <TableCell className="font-medium">{app.patient_name || "—"}</TableCell>
-                  <TableCell className="text-right">{formatBRL(app.price_cents || 0)}</TableCell>
-                  <TableCell className="text-right text-red-500">-{formatBRL(app.platform_fee_cents || 0)}</TableCell>
-                  <TableCell className="text-right font-medium text-green-600 dark:text-green-400">
+                <TableRow key={app.id} className="hover:bg-slate-50/80 border-b border-slate-100">
+                  <TableCell className="text-slate-600">{new Date(app.created_at).toLocaleDateString("pt-BR")}</TableCell>
+                  <TableCell className="font-medium text-slate-800">{app.patient_name || "—"}</TableCell>
+                  <TableCell className="text-right font-heading font-semibold text-slate-600">{formatBRL(app.price_cents || 0)}</TableCell>
+                  <TableCell className="text-right font-heading font-semibold text-red-500">-{formatBRL(app.platform_fee_cents || 0)}</TableCell>
+                  <TableCell className="text-right font-heading font-semibold text-emerald-600">
                     {formatBRL((app.price_cents || 0) - (app.platform_fee_cents || 0))}
                   </TableCell>
                 </TableRow>

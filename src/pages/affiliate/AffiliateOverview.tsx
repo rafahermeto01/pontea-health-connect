@@ -70,60 +70,87 @@ export default function AffiliateOverview() {
   const formattedBalance = ((affiliate.balance_cents || 0) / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
   return (
-    <div className="space-y-8 bg-[#0F172A] min-h-full p-4 rounded-xl text-slate-100">
+    <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold tracking-tight text-white">Visão Geral</h2>
-        <p className="text-slate-400">Acompanhe seu desempenho em tempo real.</p>
+        <h2 className="font-heading text-2xl font-bold tracking-tight text-slate-900">Visão Geral</h2>
+        <p className="text-slate-500 mt-1">Acompanhe seu desempenho em tempo real.</p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="bg-[#1E293B] border-slate-800 text-white">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-slate-400">Total de Cliques</CardTitle>
-            <MousePointerClick className="h-4 w-4 text-[#0D9488]" />
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        {/* Card 1 */}
+        <Card className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-6 hover:shadow-md transition-all duration-300">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 p-0 mb-4">
+            <CardTitle className="text-xs uppercase tracking-wider text-slate-400 font-medium">Total de Cliques</CardTitle>
+            <div className="h-11 w-11 rounded-full bg-teal-50 flex items-center justify-center shrink-0">
+               <MousePointerClick className="h-5 w-5 text-teal-600" />
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{metrics.clicks}</div>
+          <CardContent className="p-0">
+            <div className="flex items-end justify-between">
+              <div className="font-heading text-3xl font-bold text-slate-900">{metrics.clicks}</div>
+              <span className="text-emerald-600 text-xs font-medium bg-emerald-50 px-2 py-1 rounded-md mb-1">+12%</span>
+            </div>
           </CardContent>
         </Card>
-        <Card className="bg-[#1E293B] border-slate-800 text-white">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-slate-400">Agendamentos</CardTitle>
-            <CalendarCheck className="h-4 w-4 text-[#22C55E]" />
+
+        {/* Card 2 */}
+        <Card className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-6 hover:shadow-md transition-all duration-300">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 p-0 mb-4">
+            <CardTitle className="text-xs uppercase tracking-wider text-slate-400 font-medium">Agendamentos</CardTitle>
+            <div className="h-11 w-11 rounded-full bg-emerald-50 flex items-center justify-center shrink-0">
+               <CalendarCheck className="h-5 w-5 text-emerald-600" />
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{metrics.appointments}</div>
+          <CardContent className="p-0">
+            <div className="flex items-end justify-between">
+              <div className="font-heading text-3xl font-bold text-slate-900">{metrics.appointments}</div>
+              <span className="text-emerald-600 text-xs font-medium bg-emerald-50 px-2 py-1 rounded-md mb-1">+8%</span>
+            </div>
           </CardContent>
         </Card>
-        <Card className="bg-[#1E293B] border-slate-800 text-white">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-slate-400">Taxa de Conversão</CardTitle>
-            <Percent className="h-4 w-4 text-blue-400" />
+
+        {/* Card 3 */}
+        <Card className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-6 hover:shadow-md transition-all duration-300">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 p-0 mb-4">
+            <CardTitle className="text-xs uppercase tracking-wider text-slate-400 font-medium">Taxa de Conversão</CardTitle>
+            <div className="h-11 w-11 rounded-full bg-sky-50 flex items-center justify-center shrink-0">
+               <Percent className="h-5 w-5 text-sky-600" />
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{conversionRate}%</div>
+          <CardContent className="p-0">
+            <div className="flex items-end justify-between">
+              <div className="font-heading text-3xl font-bold text-slate-900">{conversionRate}%</div>
+              <span className="text-emerald-600 text-xs font-medium bg-emerald-50 px-2 py-1 rounded-md mb-1">+2%</span>
+            </div>
           </CardContent>
         </Card>
-        <Card className="bg-[#1E293B] border-slate-800 text-white">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-slate-400">Saldo Disponível</CardTitle>
-            <DollarSign className="h-4 w-4 text-emerald-400" />
+
+        {/* Card 4 */}
+        <Card className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-6 hover:shadow-md transition-all duration-300">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 p-0 mb-4">
+            <CardTitle className="text-xs uppercase tracking-wider text-slate-400 font-medium">Saldo Disponível</CardTitle>
+            <div className="h-11 w-11 rounded-full bg-amber-50 flex items-center justify-center shrink-0">
+               <DollarSign className="h-5 w-5 text-amber-600" />
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formattedBalance}</div>
+          <CardContent className="p-0">
+            <div className="flex items-end justify-between">
+              <div className="font-heading text-3xl font-bold text-slate-900">{formattedBalance}</div>
+              <span className="text-emerald-600 text-xs font-medium bg-emerald-50 px-2 py-1 rounded-md mb-1">+5%</span>
+            </div>
           </CardContent>
         </Card>
       </div>
 
-      <Card className="bg-[#1E293B] border-slate-800">
-        <CardHeader>
-          <CardTitle className="text-lg text-white">Cliques e Agendamentos (Últimos 30 Dias)</CardTitle>
+      <Card className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-6">
+        <CardHeader className="p-0 mb-6">
+          <CardTitle className="font-heading text-lg font-semibold text-slate-900">Cliques e Agendamentos (Últimos 30 Dias)</CardTitle>
         </CardHeader>
-        <CardContent className="pt-4">
+        <CardContent className="p-0">
           <div className="h-[350px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={chartData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
                 <XAxis 
                   dataKey="name" 
                   stroke="#94a3b8" 
@@ -140,15 +167,15 @@ export default function AffiliateOverview() {
                   dx={-10}
                 />
                 <Tooltip 
-                  contentStyle={{ backgroundColor: '#0F172A', borderColor: '#334155', color: '#fff' }}
-                  itemStyle={{ color: '#fff' }}
+                  contentStyle={{ backgroundColor: '#ffffff', borderColor: '#e2e8f0', color: '#0f172a', borderRadius: '0.5rem', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)' }}
+                  itemStyle={{ color: '#0f172a' }}
                 />
                 <Legend iconType="circle" wrapperStyle={{ paddingTop: "20px" }}/>
                 <Line 
                   name="Cliques"
                   type="monotone" 
                   dataKey="clicks" 
-                  stroke="#0D9488" 
+                  stroke="#14b8a6" 
                   strokeWidth={3}
                   dot={{ r: 4, strokeWidth: 2 }}
                   activeDot={{ r: 6 }}
@@ -157,7 +184,7 @@ export default function AffiliateOverview() {
                   name="Agendamentos"
                   type="monotone" 
                   dataKey="appointments" 
-                  stroke="#22C55E" 
+                  stroke="#10b981" 
                   strokeWidth={3}
                   dot={{ r: 4, strokeWidth: 2 }}
                   activeDot={{ r: 6 }}

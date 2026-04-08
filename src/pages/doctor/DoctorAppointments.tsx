@@ -94,10 +94,10 @@ export default function DoctorAppointments() {
 
   const statusBadge = (status: string) => {
     switch (status) {
-      case "pending": return <Badge variant="secondary">Pendente</Badge>;
-      case "completed": return <Badge className="bg-green-500 hover:bg-green-600">Concluído</Badge>;
-      case "cancelled": return <Badge variant="destructive">Cancelado</Badge>;
-      case "no_show": return <Badge variant="outline" className="border-red-500 text-red-500">Faltou</Badge>;
+      case "pending": return <Badge className="bg-amber-50 text-amber-700 hover:bg-amber-100 border-none shadow-none">Pendente</Badge>;
+      case "completed": return <Badge className="bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-none shadow-none">Concluído</Badge>;
+      case "cancelled": return <Badge className="bg-red-50 text-red-700 hover:bg-red-100 border-none shadow-none">Cancelado</Badge>;
+      case "no_show": return <Badge className="bg-slate-100 text-slate-600 hover:bg-slate-200 border-none shadow-none">Faltou</Badge>;
       default: return <Badge>{status}</Badge>;
     }
   };
@@ -156,49 +156,49 @@ export default function DoctorAppointments() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight text-foreground">Agendamentos</h2>
-          <p className="text-muted-foreground">Gerencie suas consultas e status.</p>
+          <h2 className="font-heading text-2xl font-bold tracking-tight text-slate-900">Agendamentos</h2>
+          <p className="text-slate-500 mt-1">Gerencie suas consultas e status.</p>
         </div>
 
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button>Registrar Nova Consulta</Button>
+            <Button className="bg-teal-600 text-white rounded-xl hover:bg-teal-700">Registrar Nova Consulta</Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px]">
+          <DialogContent className="sm:max-w-[425px] bg-white border border-slate-200 rounded-2xl shadow-xl">
             <DialogHeader>
-              <DialogTitle>Registrar Consulta Manual</DialogTitle>
+              <DialogTitle className="font-heading text-lg font-semibold text-slate-900">Registrar Consulta Manual</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleRegister} className="space-y-4">
               <div>
-                <Label>Nome do Paciente</Label>
-                <Input value={form.patient_name} onChange={e => setForm({...form, patient_name: e.target.value})} required />
+                <Label className="text-sm font-medium text-slate-700">Nome do Paciente</Label>
+                <Input className="bg-slate-50 border border-slate-200 rounded-xl focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:border-teal-500" value={form.patient_name} onChange={e => setForm({...form, patient_name: e.target.value})} required />
               </div>
               <div>
-                <Label>Telefone</Label>
-                <Input value={form.patient_phone} onChange={e => setForm({...form, patient_phone: e.target.value})} />
+                <Label className="text-sm font-medium text-slate-700">Telefone</Label>
+                <Input className="bg-slate-50 border border-slate-200 rounded-xl focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:border-teal-500" value={form.patient_phone} onChange={e => setForm({...form, patient_phone: e.target.value})} />
               </div>
               <div>
-                <Label>E-mail</Label>
-                <Input type="email" value={form.patient_email} onChange={e => setForm({...form, patient_email: e.target.value})} />
+                <Label className="text-sm font-medium text-slate-700">E-mail</Label>
+                <Input className="bg-slate-50 border border-slate-200 rounded-xl focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:border-teal-500" type="email" value={form.patient_email} onChange={e => setForm({...form, patient_email: e.target.value})} />
               </div>
               <div>
-                <Label>Valor cobrado (em centavos)</Label>
-                <Input type="number" value={form.price_cents} onChange={e => setForm({...form, price_cents: e.target.value})} required />
+                <Label className="text-sm font-medium text-slate-700">Valor cobrado (em centavos)</Label>
+                <Input className="bg-slate-50 border border-slate-200 rounded-xl focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:border-teal-500" type="number" value={form.price_cents} onChange={e => setForm({...form, price_cents: e.target.value})} required />
               </div>
               <div>
-                <Label>Código do Afiliado (Opcional)</Label>
-                <Input value={form.ref_code} onChange={e => setForm({...form, ref_code: e.target.value})} placeholder="ex: joao_x1y2" />
+                <Label className="text-sm font-medium text-slate-700">Código do Afiliado (Opcional)</Label>
+                <Input className="bg-slate-50 border border-slate-200 rounded-xl focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:border-teal-500" value={form.ref_code} onChange={e => setForm({...form, ref_code: e.target.value})} placeholder="ex: joao_x1y2" />
               </div>
-              <Button type="submit" className="w-full">Salvar</Button>
+              <Button type="submit" className="w-full bg-teal-600 text-white rounded-xl hover:bg-teal-700">Salvar</Button>
             </form>
           </DialogContent>
         </Dialog>
       </div>
 
-      <div className="rounded-md border border-border">
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden">
         <Table>
-          <TableHeader>
-            <TableRow>
+          <TableHeader className="bg-slate-50 [&_th]:text-xs [&_th]:uppercase [&_th]:tracking-wider [&_th]:text-slate-500 [&_th]:font-medium border-b border-slate-100">
+            <TableRow className="hover:bg-transparent">
               <TableHead>Data de Criação</TableHead>
               <TableHead>Paciente</TableHead>
               <TableHead>Telefone</TableHead>
@@ -217,27 +217,27 @@ export default function DoctorAppointments() {
               </TableRow>
             ) : (
               appointments.map((app) => (
-                <TableRow key={app.id}>
-                  <TableCell>{new Date(app.created_at).toLocaleDateString("pt-BR")}</TableCell>
-                  <TableCell className="font-medium">{app.patient_name || "—"}</TableCell>
-                  <TableCell>{app.patient_phone || "—"}</TableCell>
-                  <TableCell>
+                <TableRow key={app.id} className="hover:bg-slate-50/80 border-b border-slate-100">
+                  <TableCell className="text-slate-600">{new Date(app.created_at).toLocaleDateString("pt-BR")}</TableCell>
+                  <TableCell className="font-medium text-slate-800">{app.patient_name || "—"}</TableCell>
+                  <TableCell className="text-slate-600">{app.patient_phone || "—"}</TableCell>
+                  <TableCell className="font-heading font-semibold text-slate-900">
                     {((app.price_cents || 0) / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="text-slate-600">
                     {app.affiliates?.ref_code || app.ref_code || "Direto"}
                   </TableCell>
                   <TableCell>{statusBadge(app.status)}</TableCell>
                   <TableCell className="text-right">
                     {app.status === "pending" && (
                       <div className="flex justify-end gap-2">
-                        <Button size="sm" variant="outline" className="border-green-500 text-green-500 hover:bg-green-500/10" onClick={() => updateStatus(app, "completed")}>
+                        <Button size="sm" variant="outline" className="border-emerald-500 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 bg-transparent" onClick={() => updateStatus(app, "completed")}>
                           Confirmar
                         </Button>
-                        <Button size="sm" variant="outline" className="border-red-500 text-red-500 hover:bg-red-500/10" onClick={() => updateStatus(app, "cancelled")}>
+                        <Button size="sm" variant="outline" className="border-red-500 text-red-600 hover:bg-red-50 hover:text-red-700 bg-transparent" onClick={() => updateStatus(app, "cancelled")}>
                           Cancelar
                         </Button>
-                        <Button size="sm" variant="ghost" onClick={() => updateStatus(app, "no_show")}>
+                        <Button size="sm" variant="ghost" className="text-slate-500 hover:bg-slate-100" onClick={() => updateStatus(app, "no_show")}>
                           Faltou
                         </Button>
                       </div>

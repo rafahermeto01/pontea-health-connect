@@ -1,4 +1,4 @@
-import { BarChart3, Link as LinkIcon, MousePointerClick, DollarSign, Wallet, LogOut } from "lucide-react";
+import { BarChart3, Link as LinkIcon, MousePointerClick, DollarSign, Wallet, LogOut, User } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -36,17 +36,18 @@ export default function AffiliateSidebar({ affiliateName }: { affiliateName: str
   };
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-slate-800 bg-slate-900 text-slate-100">
-      <SidebarContent className="bg-[#0F172A]">
-        {!collapsed && (
-          <div className="px-4 py-4 border-b border-slate-800">
-            <p className="text-xs text-slate-400">Afiliado</p>
-            <p className="text-sm font-semibold text-slate-100 truncate">{affiliateName ?? "—"}</p>
-          </div>
-        )}
+    <Sidebar collapsible="icon" className="border-r border-slate-200 bg-white">
+      <SidebarContent>
+        <div className="flex items-center px-6 py-6 border-b border-slate-100">
+          {!collapsed ? (
+            <span className="font-heading font-bold text-xl text-teal-600 tracking-tight">Pontea</span>
+          ) : (
+            <span className="font-heading font-bold text-xl text-teal-600 mx-auto tracking-tight">P</span>
+          )}
+        </div>
         <SidebarGroup>
-          <SidebarGroupLabel className="text-slate-400">Menu</SidebarGroupLabel>
-          <SidebarGroupContent>
+          <SidebarGroupLabel className="text-slate-400 px-6 py-4 text-xs font-medium uppercase tracking-wider">Menu</SidebarGroupLabel>
+          <SidebarGroupContent className="px-3">
             <SidebarMenu>
               {items.map((item) => {
                 const active = location.pathname === item.url;
@@ -56,14 +57,14 @@ export default function AffiliateSidebar({ affiliateName }: { affiliateName: str
                       <NavLink
                         to={item.url}
                         end
-                        className={`hover:bg-[#0D9488]/10 text-slate-200 transition-colors ${
+                        className={`flex items-center w-full py-3 px-4 rounded-[10px] text-sm transition-colors ${
                           active 
-                            ? "bg-[#0D9488]/10 border-l-2 border-[#0D9488] text-[#0D9488] font-medium" 
-                            : "border-l-2 border-transparent"
+                            ? "bg-teal-50 text-teal-700 font-medium border-l-[3px] border-teal-600" 
+                            : "text-slate-600 hover:bg-slate-50 hover:text-slate-900 border-l-[3px] border-transparent"
                         }`}
-                        activeClassName="bg-[#0D9488]/10 text-[#0D9488] font-medium border-[#0D9488]"
+                        activeClassName="bg-teal-50 text-teal-700 font-medium border-l-[3px] border-teal-600"
                       >
-                        <item.icon className={`mr-2 h-4 w-4 ${active ? "text-[#0D9488]" : "text-slate-400"}`} />
+                        <item.icon className={`mr-3 h-5 w-5 ${active ? "text-teal-600" : "text-slate-400"}`} />
                         {!collapsed && <span>{item.title}</span>}
                       </NavLink>
                     </SidebarMenuButton>
@@ -74,11 +75,27 @@ export default function AffiliateSidebar({ affiliateName }: { affiliateName: str
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter className="bg-[#0F172A] border-t border-slate-800">
-        <Button variant="ghost" size="sm" onClick={handleLogout} className="w-full justify-start text-slate-400 hover:text-slate-200 hover:bg-slate-800">
-          <LogOut className="mr-2 h-4 w-4" />
-          {!collapsed && "Sair"}
-        </Button>
+      <SidebarFooter className="border-t border-slate-100 p-4">
+        {!collapsed ? (
+          <div className="flex items-center justify-between mb-2 px-2">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 shrink-0">
+                <User size={16} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-slate-700 truncate">{affiliateName ?? "—"}</p>
+                <p className="text-xs text-slate-400">Afiliado</p>
+              </div>
+            </div>
+            <button onClick={handleLogout} className="text-slate-400 hover:text-red-500 transition-colors p-1" title="Sair">
+              <LogOut className="h-4 w-4" />
+            </button>
+          </div>
+        ) : (
+          <button onClick={handleLogout} className="mx-auto flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-50 hover:text-red-500 transition-colors" title="Sair">
+             <LogOut className="h-4 w-4" />
+          </button>
+        )}
       </SidebarFooter>
     </Sidebar>
   );

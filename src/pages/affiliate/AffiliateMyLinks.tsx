@@ -22,7 +22,7 @@ export default function AffiliateMyLinks() {
       // Fetch all clicks for this affiliate
       const { data } = await supabase
         .from("referral_clicks")
-        .select("landing_page, converted") // Assume specialty_filter/city_filter might not natively be there in this schema version or we extract from URL
+        .select("landing_page, converted, specialty_filter, city_filter") // Assume specialty_filter/city_filter might not natively be there in this schema version or we extract from URL
         .eq("affiliate_id", affiliate.id);
 
       if (data) {
@@ -82,33 +82,33 @@ export default function AffiliateMyLinks() {
   }, [affiliate.id]);
 
   return (
-    <div className="space-y-6 text-slate-100">
+    <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold tracking-tight text-white">Meus Links</h2>
-        <p className="text-slate-400">Desempenho detalhado de cada link compartilhado.</p>
+        <h2 className="font-heading text-2xl font-bold tracking-tight text-slate-900">Meus Links</h2>
+        <p className="text-slate-500 mt-1">Desempenho detalhado de cada link compartilhado.</p>
       </div>
 
-      <Card className="bg-[#1E293B] border-slate-800">
-        <CardHeader>
+      <Card className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-6">
+        <CardHeader className="p-0 mb-6">
           <div className="flex items-center space-x-2">
-            <Link className="h-5 w-5 text-[#0D9488]" />
-            <CardTitle className="text-white">Conversões por Link</CardTitle>
+            <Link className="h-5 w-5 text-teal-600" />
+            <CardTitle className="font-heading text-lg font-semibold text-slate-900">Conversões por Link</CardTitle>
           </div>
-          <CardDescription className="text-slate-400">
+          <CardDescription className="text-slate-500 mt-1">
             Acompanhe quais campanhas ou filtros estão trazendo mais resultados.
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="rounded-md border border-slate-700 bg-[#0F172A] overflow-hidden">
+        <CardContent className="p-0">
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden">
             <Table>
-              <TableHeader className="bg-[#1E293B] border-b border-slate-700">
-                <TableRow className="border-b border-slate-700 hover:bg-transparent">
-                  <TableHead className="text-slate-300">Landing Page</TableHead>
-                  <TableHead className="text-slate-300">Filtro Especialidade</TableHead>
-                  <TableHead className="text-slate-300">Filtro Cidade</TableHead>
-                  <TableHead className="text-right text-slate-300">Cliques</TableHead>
-                  <TableHead className="text-right text-slate-300">Agendamentos</TableHead>
-                  <TableHead className="text-right text-slate-300">Conversão</TableHead>
+              <TableHeader className="bg-slate-50 [&_th]:text-xs [&_th]:uppercase [&_th]:tracking-wider [&_th]:text-slate-500 [&_th]:font-medium border-b border-slate-100">
+                <TableRow className="hover:bg-transparent">
+                  <TableHead>Landing Page</TableHead>
+                  <TableHead>Filtro Especialidade</TableHead>
+                  <TableHead>Filtro Cidade</TableHead>
+                  <TableHead className="text-right">Cliques</TableHead>
+                  <TableHead className="text-right">Agendamentos</TableHead>
+                  <TableHead className="text-right">Conversão</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -124,15 +124,15 @@ export default function AffiliateMyLinks() {
                   linksData.map((row, i) => {
                     const convRate = row.clicks > 0 ? ((row.conversions / row.clicks) * 100).toFixed(1) : "0.0";
                     return (
-                      <TableRow key={i} className="border-b border-slate-800 hover:bg-slate-800/50">
-                        <TableCell className="font-mono text-xs text-[#0D9488] max-w-[200px] truncate" title={row.landing_page}>
+                      <TableRow key={i} className="hover:bg-slate-50/80 border-b border-slate-100">
+                        <TableCell className="font-mono text-xs text-teal-600 max-w-[200px] truncate" title={row.landing_page}>
                           {row.landing_page}
                         </TableCell>
-                        <TableCell className="text-slate-300">{row.specialty}</TableCell>
-                        <TableCell className="text-slate-300">{row.city}</TableCell>
-                        <TableCell className="text-right font-medium text-white">{row.clicks}</TableCell>
-                        <TableCell className="text-right font-medium text-emerald-400">{row.conversions}</TableCell>
-                        <TableCell className="text-right font-medium text-blue-400">{convRate}%</TableCell>
+                        <TableCell className="text-slate-600 font-medium">{row.specialty}</TableCell>
+                        <TableCell className="text-slate-600 font-medium">{row.city}</TableCell>
+                        <TableCell className="text-right font-heading font-semibold text-slate-900">{row.clicks}</TableCell>
+                        <TableCell className="text-right font-heading font-semibold text-emerald-600">{row.conversions}</TableCell>
+                        <TableCell className="text-right font-heading font-semibold text-sky-600">{convRate}%</TableCell>
                       </TableRow>
                     );
                   })

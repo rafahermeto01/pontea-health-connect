@@ -43,47 +43,74 @@ export default function DoctorOverview() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold tracking-tight text-foreground">Visão Geral</h2>
-        <p className="text-muted-foreground">Acompanhe seus resultados e avaliações.</p>
+        <h2 className="font-heading text-2xl font-bold tracking-tight text-slate-900">Visão Geral</h2>
+        <p className="text-slate-500 mt-1">Acompanhe seus resultados e avaliações.</p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Consultas (Mês)</CardTitle>
-            <CalendarCheck className="h-4 w-4 text-muted-foreground" />
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        {/* Card 1 */}
+        <Card className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-6 hover:shadow-md transition-all duration-300">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 p-0 mb-4">
+            <CardTitle className="text-xs uppercase tracking-wider text-slate-400 font-medium">Consultas (Mês)</CardTitle>
+            <div className="h-11 w-11 rounded-full bg-teal-50 flex items-center justify-center shrink-0">
+              <CalendarCheck className="h-5 w-5 text-teal-600" />
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{metrics.appointmentsThisMonth}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Receita (Mês)</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {(metrics.revenueThisMonth / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+          <CardContent className="p-0">
+            <div className="flex items-end justify-between">
+              <div className="font-heading text-3xl font-bold text-slate-900">{metrics.appointmentsThisMonth}</div>
+              <span className="text-emerald-600 text-xs font-medium bg-emerald-50 px-2 py-1 rounded-md mb-1">+12%</span>
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avaliação Média</CardTitle>
-            <Star className="h-4 w-4 text-muted-foreground" />
+
+        {/* Card 2 */}
+        <Card className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-6 hover:shadow-md transition-all duration-300">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 p-0 mb-4">
+            <CardTitle className="text-xs uppercase tracking-wider text-slate-400 font-medium">Receita (Mês)</CardTitle>
+            <div className="h-11 w-11 rounded-full bg-emerald-50 flex items-center justify-center shrink-0">
+              <DollarSign className="h-5 w-5 text-emerald-600" />
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{rating}</div>
+          <CardContent className="p-0">
+            <div className="flex items-end justify-between">
+              <div className="font-heading text-3xl font-bold text-slate-900">
+                {(metrics.revenueThisMonth / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+              </div>
+              <span className="text-emerald-600 text-xs font-medium bg-emerald-50 px-2 py-1 rounded-md mb-1">+8%</span>
+            </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total de Avaliações</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+
+        {/* Card 3 */}
+        <Card className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-6 hover:shadow-md transition-all duration-300">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 p-0 mb-4">
+            <CardTitle className="text-xs uppercase tracking-wider text-slate-400 font-medium">Avaliação Média</CardTitle>
+            <div className="h-11 w-11 rounded-full bg-sky-50 flex items-center justify-center shrink-0">
+               <Star className="h-5 w-5 text-sky-600" />
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{reviewsCount}</div>
+          <CardContent className="p-0">
+            <div className="flex items-end justify-between">
+              <div className="font-heading text-3xl font-bold text-slate-900">{rating}</div>
+              <span className="text-emerald-600 text-xs font-medium bg-emerald-50 px-2 py-1 rounded-md mb-1">+2%</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Card 4 */}
+        <Card className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-6 hover:shadow-md transition-all duration-300">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 p-0 mb-4">
+            <CardTitle className="text-xs uppercase tracking-wider text-slate-400 font-medium">Total de Avaliações</CardTitle>
+            <div className="h-11 w-11 rounded-full bg-amber-50 flex items-center justify-center shrink-0">
+              <Users className="h-5 w-5 text-amber-600" />
+            </div>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="flex items-end justify-between">
+              <div className="font-heading text-3xl font-bold text-slate-900">{reviewsCount}</div>
+              <span className="text-emerald-600 text-xs font-medium bg-emerald-50 px-2 py-1 rounded-md mb-1">+5%</span>
+            </div>
           </CardContent>
         </Card>
       </div>

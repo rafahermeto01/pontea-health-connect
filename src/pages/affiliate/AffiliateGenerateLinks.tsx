@@ -70,43 +70,43 @@ export default function AffiliateGenerateLinks() {
   };
 
   return (
-    <div className="space-y-6 max-w-4xl text-slate-100">
+    <div className="space-y-6 max-w-4xl">
       <div>
-        <h2 className="text-2xl font-bold tracking-tight text-white">Gerar Links</h2>
-        <p className="text-slate-400">Crie links personalizados para indicar a plataforma.</p>
+        <h2 className="font-heading text-2xl font-bold tracking-tight text-slate-900">Gerar Links</h2>
+        <p className="text-slate-500 mt-1">Crie links personalizados para indicar a plataforma.</p>
       </div>
 
-      <Card className="bg-[#1E293B] border-slate-800">
-        <CardHeader>
-          <CardTitle className="text-white">Seu link principal</CardTitle>
-          <CardDescription className="text-slate-400">Use este link para convidar pacientes diretamente para a plataforma principal.</CardDescription>
+      <Card className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-6">
+        <CardHeader className="p-0 mb-6">
+          <CardTitle className="font-heading text-lg font-semibold text-slate-900">Seu link principal</CardTitle>
+          <CardDescription className="text-slate-500 mt-1">Use este link para convidar pacientes diretamente para a plataforma principal.</CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="flex gap-2 items-center">
-            <div className="flex-1 bg-[#0F172A] p-3 rounded-md border border-slate-700 text-slate-300 font-mono text-sm truncate">
+        <CardContent className="p-0">
+          <div className="flex gap-3 items-center">
+            <div className="flex-1 bg-slate-50 p-4 rounded-xl border border-slate-200 text-slate-600 font-mono text-sm truncate">
               {mainLink}
             </div>
-            <Button onClick={() => copyToClipboard(mainLink)} className="bg-[#0D9488] hover:bg-[#0f766e] text-white">
+            <Button onClick={() => copyToClipboard(mainLink)} className="bg-teal-600 text-white rounded-xl hover:bg-teal-700 h-14 px-6 shadow-sm">
               <Copy className="mr-2 h-4 w-4" /> Copiar
             </Button>
           </div>
         </CardContent>
       </Card>
 
-      <Card className="bg-[#1E293B] border-slate-800">
-        <CardHeader>
-          <CardTitle className="text-white">Gerar link personalizado</CardTitle>
-          <CardDescription className="text-slate-400">Direcione seu público diretamente para médicos específicos de uma localização.</CardDescription>
+      <Card className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-6">
+        <CardHeader className="p-0 mb-6">
+          <CardTitle className="font-heading text-lg font-semibold text-slate-900">Gerar link personalizado</CardTitle>
+          <CardDescription className="text-slate-500 mt-1">Direcione seu público diretamente para médicos específicos de uma localização.</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="p-0 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label className="text-slate-200">Especialidade (Opcional)</Label>
+              <Label className="text-sm font-medium text-slate-700">Especialidade (Opcional)</Label>
               <Select value={selectedSpecialty} onValueChange={setSelectedSpecialty}>
-                <SelectTrigger className="bg-[#0F172A] border-slate-700 text-slate-200">
+                <SelectTrigger className="bg-slate-50 border border-slate-200 rounded-xl text-slate-700 h-12 focus:ring-2 focus:ring-teal-500">
                   <SelectValue placeholder="Todas as especialidades" />
                 </SelectTrigger>
-                <SelectContent className="bg-[#1E293B] border-slate-700 text-slate-200">
+                <SelectContent className="bg-white border-slate-200 text-slate-700 rounded-xl shadow-lg">
                   <SelectItem value="all">Todas as especialidades</SelectItem>
                   {specialties.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                 </SelectContent>
@@ -114,12 +114,12 @@ export default function AffiliateGenerateLinks() {
             </div>
             
             <div className="space-y-2">
-              <Label className="text-slate-200">Cidade (Opcional)</Label>
+              <Label className="text-sm font-medium text-slate-700">Cidade (Opcional)</Label>
               <Select value={selectedCity} onValueChange={setSelectedCity}>
-                <SelectTrigger className="bg-[#0F172A] border-slate-700 text-slate-200">
+                <SelectTrigger className="bg-slate-50 border border-slate-200 rounded-xl text-slate-700 h-12 focus:ring-2 focus:ring-teal-500">
                   <SelectValue placeholder="Todas as cidades" />
                 </SelectTrigger>
-                <SelectContent className="bg-[#1E293B] border-slate-700 text-slate-200">
+                <SelectContent className="bg-white border-slate-200 text-slate-700 rounded-xl shadow-lg">
                   <SelectItem value="all">Todas as cidades</SelectItem>
                   {cities.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                 </SelectContent>
@@ -127,18 +127,18 @@ export default function AffiliateGenerateLinks() {
             </div>
           </div>
 
-          <div className="space-y-3">
-            <Label className="text-slate-200">Preview do Link</Label>
-            <div className="bg-[#0F172A] p-4 rounded-md border border-slate-700">
-              <p className="text-teal-400 break-all font-mono text-sm">{generatedLink}</p>
+          <div className="space-y-2">
+            <Label className="text-sm font-medium text-slate-700">Preview do Link</Label>
+            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+              <p className="text-teal-600 break-all font-mono text-sm">{generatedLink}</p>
             </div>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3">
-            <Button onClick={() => copyToClipboard(generatedLink)} className="bg-[#0D9488] hover:bg-[#0f766e] text-white">
+            <Button onClick={() => copyToClipboard(generatedLink)} className="bg-teal-600 text-white rounded-xl hover:bg-teal-700 h-12 shadow-sm font-medium px-6">
               <Copy className="mr-2 h-4 w-4" /> Copiar Link
             </Button>
-            <Button onClick={shareWhatsApp} className="bg-[#22C55E] hover:bg-[#16a34a] text-white font-medium">
+            <Button onClick={shareWhatsApp} className="bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl h-12 shadow-sm font-medium px-6">
               <Share2 className="mr-2 h-4 w-4" /> Compartilhar no WhatsApp
             </Button>
           </div>

@@ -47,46 +47,46 @@ export default function AffiliateCommissions() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "completed":
-        return <Badge className="bg-emerald-500/20 text-emerald-500 hover:bg-emerald-500/30 border-0">Concluído</Badge>;
+        return <Badge className="bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-none shadow-none">Concluído</Badge>;
       case "pending":
-        return <Badge className="bg-amber-500/20 text-amber-500 hover:bg-amber-500/30 border-0">Pendente</Badge>;
+        return <Badge className="bg-amber-50 text-amber-700 hover:bg-amber-100 border-none shadow-none">Pendente</Badge>;
       case "cancelled":
-        return <Badge className="bg-red-500/20 text-red-500 hover:bg-red-500/30 border-0">Cancelado</Badge>;
+        return <Badge className="bg-red-50 text-red-700 hover:bg-red-100 border-none shadow-none">Cancelado</Badge>;
       case "no_show":
-        return <Badge className="bg-slate-500/20 text-slate-400 hover:bg-slate-500/30 border-0">Faltou</Badge>;
+        return <Badge className="bg-slate-100 text-slate-600 hover:bg-slate-200 border-none shadow-none">Faltou</Badge>;
       default:
-        return <Badge variant="outline" className="text-slate-400 border-slate-700">{status}</Badge>;
+        return <Badge variant="outline" className="text-slate-500 border-slate-200">{status}</Badge>;
     }
   };
 
   return (
-    <div className="space-y-6 text-slate-100">
+    <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold tracking-tight text-white">Comissões Recebidas</h2>
-        <p className="text-slate-400">Acompanhe todas as consultas geradas pelos seus links e as respectivas recompensas.</p>
+        <h2 className="font-heading text-2xl font-bold tracking-tight text-slate-900">Comissões Recebidas</h2>
+        <p className="text-slate-500 mt-1">Acompanhe todas as consultas geradas pelos seus links e as respectivas recompensas.</p>
       </div>
 
-      <Card className="bg-[#1E293B] border-slate-800">
-        <CardHeader>
+      <Card className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-6">
+        <CardHeader className="p-0 mb-6">
           <div className="flex items-center space-x-2">
-            <DollarSign className="h-5 w-5 text-[#0D9488]" />
-            <CardTitle className="text-white">Histórico de Indicações</CardTitle>
+            <DollarSign className="h-5 w-5 text-teal-600" />
+            <CardTitle className="font-heading text-lg font-semibold text-slate-900">Histórico de Indicações</CardTitle>
           </div>
-          <CardDescription className="text-slate-400">
+          <CardDescription className="text-slate-500 mt-1">
             A comissão em status "Concluído" já está liberada no seu saldo.
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="rounded-md border border-slate-700 bg-[#0F172A] overflow-hidden">
+        <CardContent className="p-0">
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden">
             <Table>
-              <TableHeader className="bg-[#1E293B] border-b border-slate-700">
-                <TableRow className="border-b border-slate-700 hover:bg-transparent">
-                  <TableHead className="text-slate-300">Data</TableHead>
-                  <TableHead className="text-slate-300">Médico</TableHead>
-                  <TableHead className="text-slate-300">Paciente</TableHead>
-                  <TableHead className="text-right text-slate-300">Valor Consulta</TableHead>
-                  <TableHead className="text-right text-slate-300">Sua Comissão</TableHead>
-                  <TableHead className="text-slate-300">Status</TableHead>
+              <TableHeader className="bg-slate-50 [&_th]:text-xs [&_th]:uppercase [&_th]:tracking-wider [&_th]:text-slate-500 [&_th]:font-medium border-b border-slate-100">
+                <TableRow className="hover:bg-transparent">
+                  <TableHead>Data</TableHead>
+                  <TableHead>Médico</TableHead>
+                  <TableHead>Paciente</TableHead>
+                  <TableHead className="text-right">Valor Consulta</TableHead>
+                  <TableHead className="text-right">Sua Comissão</TableHead>
+                  <TableHead>Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -100,20 +100,20 @@ export default function AffiliateCommissions() {
                   </TableRow>
                 ) : (
                   commissions.map((row, i) => (
-                    <TableRow key={i} className="border-b border-slate-800 hover:bg-slate-800/50">
-                      <TableCell className="text-slate-300">
+                    <TableRow key={i} className="hover:bg-slate-50/80 border-b border-slate-100">
+                      <TableCell className="text-slate-600">
                         {new Date(row.created_at).toLocaleDateString("pt-BR")}
                       </TableCell>
-                      <TableCell className="text-white font-medium">
+                      <TableCell className="text-slate-800 font-medium whitespace-nowrap">
                         {row.doctors?.full_name || "—"}
                       </TableCell>
-                      <TableCell className="text-slate-300">
+                      <TableCell className="text-slate-600">
                         {getFirstName(row.patient_name)}
                       </TableCell>
-                      <TableCell className="text-right text-slate-400">
+                      <TableCell className="text-right text-slate-500 font-heading font-semibold">
                         {formatBRL(row.price_cents)}
                       </TableCell>
-                      <TableCell className="text-right font-medium text-emerald-400">
+                      <TableCell className="text-right font-heading font-semibold text-emerald-600">
                         {formatBRL(row.affiliate_commission_cents)}
                       </TableCell>
                       <TableCell>

@@ -115,33 +115,35 @@ export default function AffiliatePayouts() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "completed":
-        return <Badge className="bg-emerald-500/20 text-emerald-500 border-0">Transferido</Badge>;
+        return <Badge className="bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-none shadow-none">Transferido</Badge>;
       case "pending":
-        return <Badge className="bg-amber-500/20 text-amber-500 border-0">Em análise</Badge>;
+        return <Badge className="bg-amber-50 text-amber-700 hover:bg-amber-100 border-none shadow-none">Em análise</Badge>;
       case "processing":
-        return <Badge className="bg-blue-500/20 text-blue-500 border-0">Processando</Badge>;
+        return <Badge className="bg-sky-50 text-sky-700 hover:bg-sky-100 border-none shadow-none">Processando</Badge>;
       case "failed":
-        return <Badge className="bg-red-500/20 text-red-500 border-0">Falho</Badge>;
+        return <Badge className="bg-red-50 text-red-700 hover:bg-red-100 border-none shadow-none">Falho</Badge>;
       default:
-        return <Badge variant="outline" className="text-slate-400 border-slate-700">{status}</Badge>;
+        return <Badge variant="outline" className="text-slate-500 border-slate-200">{status}</Badge>;
     }
   };
 
   return (
-    <div className="space-y-6 text-slate-100">
+    <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold tracking-tight text-white">Saques</h2>
-        <p className="text-slate-400">Gerencie seus resgates para a sua conta via PIX.</p>
+        <h2 className="font-heading text-2xl font-bold tracking-tight text-slate-900">Saques</h2>
+        <p className="text-slate-500 mt-1">Gerencie seus resgates para a sua conta via PIX.</p>
       </div>
 
-      <Card className="bg-[#1E293B] border-slate-800">
-        <CardContent className="pt-6">
+      <Card className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-6">
+        <CardContent className="p-0">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <p className="text-sm font-medium text-slate-400">Saldo Disponível para Saque</p>
-              <div className="flex items-center gap-2 mt-1">
-                <Wallet className="h-6 w-6 text-emerald-400" />
-                <span className="text-3xl font-bold text-white">
+              <p className="text-sm font-medium text-slate-500 uppercase tracking-wider">Saldo Disponível</p>
+              <div className="flex items-center gap-2 mt-2">
+                <div className="h-10 w-10 rounded-full bg-emerald-50 flex items-center justify-center shrink-0">
+                  <Wallet className="h-5 w-5 text-emerald-600" />
+                </div>
+                <span className="font-heading text-3xl font-bold text-slate-900">
                   {formatBRL(affiliate.balance_cents)}
                 </span>
               </div>
@@ -149,42 +151,42 @@ export default function AffiliatePayouts() {
 
             <Dialog open={open} onOpenChange={setOpen}>
               <DialogTrigger asChild>
-                <Button className="bg-[#0D9488] hover:bg-[#0f766e] text-white">
+                <Button className="bg-teal-600 text-white rounded-xl hover:bg-teal-700 shadow-sm mt-2 sm:mt-0 px-6 h-12">
                   Solicitar Saque
                 </Button>
               </DialogTrigger>
-              <DialogContent className="bg-[#0F172A] border-slate-800 text-slate-100 sm:max-w-[425px]">
+              <DialogContent className="bg-white border border-slate-200 rounded-2xl shadow-xl sm:max-w-[425px]">
                 <DialogHeader>
-                  <DialogTitle className="text-white">Resgatar Saldo</DialogTitle>
-                  <DialogDescription className="text-slate-400">
+                  <DialogTitle className="font-heading text-lg font-semibold text-slate-900">Resgatar Saldo</DialogTitle>
+                  <DialogDescription className="text-slate-500">
                     O valor será depositado na sua conta via PIX em até 2 dias úteis.
                   </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleRequestPayout} className="space-y-4 pt-4">
                   <div className="space-y-2">
-                    <Label className="text-slate-300">Valor (R$)</Label>
+                    <Label className="text-sm font-medium text-slate-700">Valor (R$)</Label>
                     <Input 
                       type="number" 
                       step="0.01" 
                       min="50"
                       value={amountStr} 
                       onChange={e => setAmountStr(e.target.value)} 
-                      className="bg-[#1E293B] border-slate-700 text-white"
+                      className="bg-slate-50 border border-slate-200 rounded-xl focus-visible:ring-2 focus-visible:ring-teal-500 font-medium"
                       required 
                     />
-                    <p className="text-xs text-slate-500">Mínimo de saque: R$ 50,00</p>
+                    <p className="text-xs text-slate-500 mt-1">Mínimo de saque: R$ 50,00</p>
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-slate-300">Chave PIX</Label>
+                    <Label className="text-sm font-medium text-slate-700">Chave PIX</Label>
                     <Input 
                       value={pixKey} 
                       onChange={e => setPixKey(e.target.value)} 
-                      className="bg-[#1E293B] border-slate-700 text-white"
+                      className="bg-slate-50 border border-slate-200 rounded-xl focus-visible:ring-2 focus-visible:ring-teal-500"
                       placeholder="CPF, E-mail, Celular ou Aleatória"
                       required 
                     />
                   </div>
-                  <Button type="submit" disabled={submitting} className="w-full bg-[#0D9488] hover:bg-[#0f766e] text-white mt-4">
+                  <Button type="submit" disabled={submitting} className="w-full bg-teal-600 text-white rounded-xl hover:bg-teal-700 mt-5 h-11">
                     {submitting ? "Processando..." : "Confirmar Solicitação"}
                   </Button>
                 </form>
@@ -194,23 +196,23 @@ export default function AffiliatePayouts() {
         </CardContent>
       </Card>
 
-      <Card className="bg-[#1E293B] border-slate-800">
-        <CardHeader>
+      <Card className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-6">
+        <CardHeader className="p-0 mb-6">
           <div className="flex items-center space-x-2">
-            <Landmark className="h-5 w-5 text-[#0D9488]" />
-            <CardTitle className="text-white">Histórico de Saques</CardTitle>
+            <Landmark className="h-5 w-5 text-teal-600" />
+            <CardTitle className="font-heading text-lg font-semibold text-slate-900">Histórico de Saques</CardTitle>
           </div>
         </CardHeader>
-        <CardContent>
-          <div className="rounded-md border border-slate-700 bg-[#0F172A] overflow-hidden">
+        <CardContent className="p-0">
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden">
             <Table>
-              <TableHeader className="bg-[#1E293B] border-b border-slate-700">
-                <TableRow className="border-b border-slate-700 hover:bg-transparent">
-                  <TableHead className="text-slate-300">Data Solicitação</TableHead>
-                  <TableHead className="text-slate-300">Valor</TableHead>
-                  <TableHead className="text-slate-300">Chave PIX</TableHead>
-                  <TableHead className="text-slate-300">Status</TableHead>
-                  <TableHead className="text-slate-300">Data Processamento</TableHead>
+              <TableHeader className="bg-slate-50 [&_th]:text-xs [&_th]:uppercase [&_th]:tracking-wider [&_th]:text-slate-500 [&_th]:font-medium border-b border-slate-100">
+                <TableRow className="hover:bg-transparent">
+                  <TableHead>Data Solicitação</TableHead>
+                  <TableHead>Valor</TableHead>
+                  <TableHead>Chave PIX</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Data Processamento</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -224,20 +226,20 @@ export default function AffiliatePayouts() {
                   </TableRow>
                 ) : (
                   payouts.map((row, i) => (
-                    <TableRow key={i} className="border-b border-slate-800 hover:bg-slate-800/50">
-                      <TableCell className="text-slate-300 font-medium">
+                    <TableRow key={i} className="hover:bg-slate-50/80 border-b border-slate-100">
+                      <TableCell className="text-slate-600 font-medium">
                         {new Date(row.created_at).toLocaleDateString("pt-BR")}
                       </TableCell>
-                      <TableCell className="text-emerald-400 font-medium">
+                      <TableCell className="text-slate-900 font-heading font-bold">
                         {formatBRL(row.amount_cents)}
                       </TableCell>
-                      <TableCell className="text-slate-400 font-mono text-sm max-w-[150px] truncate">
+                      <TableCell className="text-slate-500 font-mono text-sm max-w-[150px] truncate">
                         {row.pix_key}
                       </TableCell>
                       <TableCell>
                         {getStatusBadge(row.status)}
                       </TableCell>
-                      <TableCell className="text-slate-400 text-sm">
+                      <TableCell className="text-slate-500 text-sm font-medium">
                         {row.processed_at ? new Date(row.processed_at).toLocaleDateString("pt-BR") : "—"}
                       </TableCell>
                     </TableRow>
