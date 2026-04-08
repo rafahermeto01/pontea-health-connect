@@ -34,7 +34,7 @@ export default function Footer() {
           <div>
             <h4 className="mb-6 font-heading font-semibold text-white">Contato</h4>
             <div className="flex flex-col gap-3 text-sm text-slate-400">
-              <p>suporte@pontea.com.br</p>
+              <p>suporte@ponteasaude.com.br</p>
               <p>Segunda a Sexta, 09h às 18h</p>
               <div className="mt-4 flex gap-4">
                 {/* Social placeholders could go here */}

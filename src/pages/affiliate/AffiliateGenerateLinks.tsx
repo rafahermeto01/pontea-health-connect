@@ -7,6 +7,7 @@ import { Copy, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { SITE_URL } from "@/config";
 
 export default function AffiliateGenerateLinks() {
   const { affiliate } = useOutletContext<{ affiliate: any }>();
@@ -35,7 +36,7 @@ export default function AffiliateGenerateLinks() {
   }, []);
 
   const refCode = affiliate.ref_code;
-  const baseUrl = "https://pontea.com.br";
+  const baseUrl = SITE_URL;
   
   const mainLink = `${baseUrl}?ref=${refCode}`;
   
