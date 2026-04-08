@@ -7,7 +7,7 @@ export default function Footer() {
         <div className="grid gap-12 sm:grid-cols-2 lg:grid-cols-4">
           <div className="space-y-4">
             <Link to="/">
-              <img src="/logo-pontea.png" alt="Pontea" className="h-12 w-auto object-contain brightness-0 invert" />
+              <img src="/logo-pontea.png" alt="Pontea" className="h-10 md:h-14 w-auto object-contain brightness-0 invert" />
             </Link>
             <p className="text-sm leading-relaxed text-slate-400">
               A tecnologia que aproxima médicos e pacientes, facilitando o acesso à saúde de qualidade em todo o Brasil.
