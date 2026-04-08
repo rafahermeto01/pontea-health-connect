@@ -72,8 +72,6 @@ export default function LandingPage() {
             <span>Saúde simplificada no Brasil</span>
           </div>
           
-          <img src="/logo-pontea.png" alt="Pontea" className="h-16 md:h-24 w-auto object-contain mx-auto mb-8" />
-          
           <h1 className="mx-auto max-w-4xl font-heading text-5xl font-extrabold tracking-tight text-slate-900 md:text-7xl">
             A ponte entre você <br />
             <span className="bg-gradient-to-r from-teal-600 to-cyan-600 bg-clip-text text-transparent">e o seu médico</span>

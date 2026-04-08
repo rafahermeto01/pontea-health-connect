@@ -15,7 +15,7 @@ export default function Navbar() {
 
   return (
     <nav className="sticky top-0 z-50 border-b border-slate-100 bg-white/80 shadow-sm backdrop-blur-md">
-      <div className="container flex min-h-[72px] md:min-h-[80px] items-center justify-between py-2">
+      <div className="w-full px-4 md:px-6 flex min-h-[72px] md:min-h-[80px] items-center justify-between py-2">
         <Link to="/" className="flex items-center gap-2 group transition-transform hover:scale-105 shrink-0">
           <img src="/logo-pontea.png" alt="Pontea - Saúde que Conecta" className="h-[56px] md:h-[64px] w-auto object-contain" />
         </Link>
