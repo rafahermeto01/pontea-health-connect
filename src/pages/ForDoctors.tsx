@@ -3,10 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Check, TrendingUp, Users, Shield } from "lucide-react";
 
 const benefits = [
-  { icon: TrendingUp, text: "Pacientes que chegam já motivados e informados" },
-  { icon: Users, text: "Sem custo por clique — pague apenas a mensalidade" },
-  { icon: Shield, text: "Perfil profissional com CRM verificado e avaliações" },
-  { icon: Check, text: "Agenda integrada com Cal.com, Calendly ou WhatsApp" },
+  { icon: TrendingUp, text: "Visibilidade para pacientes que já estão buscando sua especialidade" },
+  { icon: Shield, text: "Perfil profissional completo com CRM verificado e avaliações" },
+  { icon: Check, text: "Agenda integrada — pacientes agendam direto no seu Cal.com, Calendly ou WhatsApp" },
+  { icon: Users, text: "Sem custo por clique — mensalidade fixa e previsível" },
 ];
 
 const plans = [
@@ -25,10 +25,10 @@ export default function ForDoctorsPage() {
     <div className="container py-16">
       <div className="mx-auto max-w-3xl text-center">
         <h1 className="text-3xl font-extrabold text-foreground sm:text-4xl text-slate-900 font-heading">
-          Receba pacientes qualificados <span className="text-primary block mt-2">sem gastar com marketing</span>
+          Receba novos pacientes <span className="text-primary block mt-2">todos os meses</span>
         </h1>
         <p className="mt-4 text-lg text-slate-500">
-          Na Pontea, influenciadores e profissionais de saúde indicam a plataforma para milhares de seguidores. Você só precisa cadastrar seu perfil e atender.
+          Cadastre seu perfil na Pontea e seja encontrado por milhares de pacientes que buscam especialistas como você. Sem investir em marketing.
         </p>
       </div>
 
@@ -67,7 +67,7 @@ export default function ForDoctorsPage() {
               </ul>
               <Link to="/cadastro/medico">
                 <Button className="mt-6 w-full" variant={plan.featured ? "default" : "outline"}>
-                  Começar agora
+                  Cadastrar meu consultório
                 </Button>
               </Link>
             </div>

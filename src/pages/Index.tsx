@@ -21,21 +21,21 @@ import {
 const howItWorks = [
   { 
     id: "01",
-    title: "Influenciadores Indicam", 
-    desc: "Profissionais de saúde, fitness e bem-estar recomendam a Pontea para seus seguidores e ganham comissão por cada consulta agendada.",
-    icon: Users 
-  },
-  { 
-    id: "02",
-    title: "Pacientes Encontram", 
-    desc: "Você acessa o marketplace, filtra por especialidade, cidade e preço, compara avaliações e escolhe o médico ideal para sua necessidade.",
+    title: "Busque", 
+    desc: "Pesquise por especialidade, cidade ou nome. Filtre por preço, avaliação e tipo de consulta — presencial ou online.",
     icon: Search 
   },
   { 
+    id: "02",
+    title: "Compare", 
+    desc: "Veja o perfil completo do médico, formação, experiência e o que outros pacientes acharam da consulta.",
+    icon: Users 
+  },
+  { 
     id: "03",
-    title: "Médicos Atendem", 
-    desc: "Profissionais verificados com CRM recebem novos pacientes qualificados sem precisar investir em marketing próprio.",
-    icon: Stethoscope 
+    title: "Agende", 
+    desc: "Escolha o melhor horário diretamente na agenda do profissional. Sem filas, sem burocracia.",
+    icon: CalendarCheck 
   },
 ];
 
@@ -48,11 +48,13 @@ const specialtiesData = [
   { icon: Heart, name: "Nutrição", count: "156 médicos" },
 ];
 
+import { MapPin } from "lucide-react";
+
 const features = [
-  { title: "Médicos com CRM Verificado", desc: "Todos os profissionais passam por validação de registro no conselho.", icon: ShieldCheck },
-  { title: "Indicações de Confiança", desc: "Chegue aos melhores médicos através de quem você já confia.", icon: Users },
-  { title: "Avaliações Reais", desc: "Veja a experiência de outros pacientes antes de agendar.", icon: Star },
-  { title: "Agendamento Direto", desc: "Escolha data e horário diretamente na agenda do médico.", icon: CalendarCheck },
+  { title: "Médicos Verificados", desc: "Todos os profissionais possuem CRM validado e perfil verificado pela nossa equipe.", icon: ShieldCheck },
+  { title: "Avaliações Reais", desc: "Leia a experiência de outros pacientes antes de tomar sua decisão.", icon: Star },
+  { title: "Agendamento Fácil", desc: "Agende diretamente na agenda do médico, no horário que funciona pra você.", icon: CalendarCheck },
+  { title: "Perto de Você", desc: "Encontre profissionais na sua cidade ou opte por teleconsulta de qualquer lugar.", icon: MapPin },
 ];
 
 export default function LandingPage() {
@@ -71,12 +73,12 @@ export default function LandingPage() {
           </div>
           
           <h1 className="mx-auto max-w-4xl font-heading text-5xl font-extrabold tracking-tight text-slate-900 md:text-7xl">
-            Encontre o médico ideal, <br />
-            <span className="bg-gradient-to-r from-teal-600 to-cyan-600 bg-clip-text text-transparent">indicado por quem você confia</span>
+            A ponte entre você <br />
+            <span className="bg-gradient-to-r from-teal-600 to-cyan-600 bg-clip-text text-transparent">e o seu médico</span>
           </h1>
           
           <p className="mx-auto mt-8 max-w-2xl text-xl text-slate-500 leading-relaxed">
-            A Pontea conecta você a médicos verificados através de indicações de profissionais de saúde e bem-estar que você já segue. Agende sua consulta com segurança.
+            Encontre especialistas verificados, compare avaliações reais de pacientes e agende sua consulta em poucos cliques.
           </p>
           
           <div className="mt-12 flex flex-wrap justify-center gap-4">
@@ -87,19 +89,25 @@ export default function LandingPage() {
             </Link>
             <Link to="/para-medicos">
               <Button size="lg" variant="outline" className="h-14 rounded-xl border-2 border-primary px-8 text-lg font-bold text-primary transition-all hover:scale-[1.02] hover:bg-teal-50">
-                Sou Profissional
+                Sou Médico
               </Button>
             </Link>
           </div>
           
-          <div className="mt-12 flex items-center justify-center gap-8 text-sm text-slate-400">
+          <div className="mt-12 flex items-center justify-center gap-6 text-sm text-slate-500 font-medium flex-wrap">
             <div className="flex items-center gap-2">
-              <CheckCircle2 className="h-5 w-5 text-green-500" />
-              <span>+2.500 Médicos Verificados</span>
+              <CheckCircle2 className="h-4 w-4 text-teal-600" />
+              <span>Médicos verificados com CRM</span>
             </div>
+            <span className="hidden sm:inline text-slate-300">•</span>
             <div className="flex items-center gap-2">
-              <CheckCircle2 className="h-5 w-5 text-green-500" />
-              <span>50+ Especialidades</span>
+              <CheckCircle2 className="h-4 w-4 text-teal-600" />
+              <span>Avaliações reais</span>
+            </div>
+            <span className="hidden sm:inline text-slate-300">•</span>
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4 text-teal-600" />
+              <span>Agendamento direto</span>
             </div>
           </div>
         </div>
@@ -135,7 +143,7 @@ export default function LandingPage() {
         <div className="mb-16 flex items-end justify-between">
           <div className="text-left">
             <h2 className="font-heading text-3xl font-bold text-slate-900 sm:text-4xl">Especialidades em Destaque</h2>
-            <p className="mt-4 text-slate-500">Os profissionais mais buscados da nossa rede</p>
+            <p className="mt-4 text-slate-500">Encontre os melhores profissionais</p>
           </div>
           <Link to="/buscar" className="hidden items-center gap-2 text-primary font-bold hover:underline md:flex">
             Ver todas <ChevronRight className="h-4 w-4" />
@@ -203,15 +211,15 @@ export default function LandingPage() {
       <section className="container py-24">
         <div className="rounded-[32px] bg-primary px-8 py-16 text-center text-white shadow-2xl shadow-teal-900/20 md:px-16 md:py-24">
           <h2 className="mx-auto max-w-2xl font-heading text-4xl font-black md:text-5xl leading-tight">
-            Encontre seu médico agora
+            Pronto para cuidar da sua saúde?
           </h2>
           <p className="mx-auto mt-6 max-w-xl text-lg text-teal-50 opacity-90">
-            Milhares de profissionais verificados esperando por você.
+            Encontre o especialista certo para você em minutos.
           </p>
           <div className="mt-10">
             <Link to="/buscar">
               <Button size="lg" className="h-16 rounded-2xl bg-white px-10 text-xl font-black text-primary hover:bg-teal-50 transition-all hover:scale-[1.05]">
-                Agendar Minha Consulta
+                Buscar Médicos
               </Button>
             </Link>
           </div>

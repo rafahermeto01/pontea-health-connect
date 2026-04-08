@@ -23,10 +23,10 @@ export default function ForAffiliatesPage() {
     <div className="container py-16">
       <div className="mx-auto max-w-3xl text-center">
         <h1 className="text-3xl font-extrabold text-slate-900 sm:text-4xl font-heading">
-          Monetize sua audiência indicando <span className="text-primary block mt-2">médicos de confiança</span>
+          Monetize sua audiência conectando <span className="text-primary block mt-2">pessoas a médicos de confiança</span>
         </h1>
         <p className="mt-4 text-lg text-slate-500">
-          Se você é influenciador fitness, personal trainer, nutricionista ou coach de saúde, ganhe comissão por cada paciente que agendar uma consulta através do seu link.
+          Se você é influenciador fitness, personal trainer, nutricionista ou profissional de saúde, ganhe comissão por cada paciente que agendar uma consulta através do seu link.
         </p>
       </div>
 
