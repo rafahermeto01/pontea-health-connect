@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { MessageCircle } from "lucide-react";
 
 export default function DoctorAppointments() {
   const { doctor } = useOutletContext<{ doctor: any }>();
@@ -34,6 +35,8 @@ export default function DoctorAppointments() {
     patient_name: "",
     patient_phone: "",
     patient_email: "",
+    date: "",
+    time: "",
     price_cents: doctor.consultation_price?.toString() || "0",
     ref_code: "",
   });
@@ -44,7 +47,7 @@ export default function DoctorAppointments() {
       .from("appointments")
       .select("*, affiliates(ref_code)")
       .eq("doctor_id", doctor.id)
-      .order("created_at", { ascending: false });
+      .order("scheduled_at", { ascending: true });
 
     if (error) {
       toast.error("Erro ao carregar agendamentos");
@@ -127,6 +130,8 @@ export default function DoctorAppointments() {
         }
       }
 
+      const scheduled_at = new Date(`${form.date}T${form.time}`).toISOString();
+
       const { error } = await supabase.from("appointments").insert({
         doctor_id: doctor.id,
         affiliate_id,
@@ -137,6 +142,7 @@ export default function DoctorAppointments() {
         platform_fee_cents: Math.round(priceVal * 0.20),
         affiliate_commission_cents: commission_cents,
         ref_code,
+        scheduled_at,
         status: "pending",
         payment_status: "pending"
       });
@@ -145,7 +151,7 @@ export default function DoctorAppointments() {
       
       toast.success("Consulta registrada com sucesso!");
       setOpen(false);
-      setForm({ ...form, patient_name: "", patient_phone: "", patient_email: "", ref_code: "" });
+      setForm({ ...form, patient_name: "", patient_phone: "", patient_email: "", date: "", time: "", ref_code: "" });
       fetchAppointments();
     } catch (err: any) {
       toast.error(err.message || "Erro ao registrar consulta");
@@ -182,6 +188,14 @@ export default function DoctorAppointments() {
                 <Input className="bg-slate-50 border border-slate-200 rounded-xl focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:border-teal-500" type="email" value={form.patient_email} onChange={e => setForm({...form, patient_email: e.target.value})} />
               </div>
               <div>
+                <Label className="text-sm font-medium text-slate-700">Data da Consulta</Label>
+                <Input className="bg-slate-50 border border-slate-200 rounded-xl focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:border-teal-500" type="date" min={new Date().toISOString().split('T')[0]} value={form.date} onChange={e => setForm({...form, date: e.target.value})} required />
+              </div>
+              <div>
+                <Label className="text-sm font-medium text-slate-700">Horário</Label>
+                <Input className="bg-slate-50 border border-slate-200 rounded-xl focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:border-teal-500" type="time" value={form.time} onChange={e => setForm({...form, time: e.target.value})} required />
+              </div>
+              <div>
                 <Label className="text-sm font-medium text-slate-700">Valor cobrado (em centavos)</Label>
                 <Input className="bg-slate-50 border border-slate-200 rounded-xl focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:border-teal-500" type="number" value={form.price_cents} onChange={e => setForm({...form, price_cents: e.target.value})} required />
               </div>
@@ -199,7 +213,8 @@ export default function DoctorAppointments() {
         <Table>
           <TableHeader className="bg-slate-50 [&_th]:text-xs [&_th]:uppercase [&_th]:tracking-wider [&_th]:text-slate-500 [&_th]:font-medium border-b border-slate-100">
             <TableRow className="hover:bg-transparent">
-              <TableHead>Data de Criação</TableHead>
+              <TableHead>Data da Consulta</TableHead>
+              <TableHead>Horário</TableHead>
               <TableHead>Paciente</TableHead>
               <TableHead>Telefone</TableHead>
               <TableHead>Valor</TableHead>
@@ -211,14 +226,23 @@ export default function DoctorAppointments() {
           <TableBody>
             {appointments.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                   {loading ? "Carregando..." : "Nenhum agendamento encontrado."}
                 </TableCell>
               </TableRow>
             ) : (
               appointments.map((app) => (
                 <TableRow key={app.id} className="hover:bg-slate-50/80 border-b border-slate-100">
-                  <TableCell className="text-slate-600">{new Date(app.created_at).toLocaleDateString("pt-BR")}</TableCell>
+                  <TableCell className="text-slate-600 font-medium">
+                    {app.scheduled_at 
+                      ? new Date(app.scheduled_at).toLocaleDateString("pt-BR") 
+                      : new Date(app.created_at).toLocaleDateString("pt-BR")}
+                  </TableCell>
+                  <TableCell className="text-slate-600">
+                    {app.scheduled_at 
+                      ? new Date(app.scheduled_at).toLocaleTimeString("pt-BR", { hour: '2-digit', minute: '2-digit' }) 
+                      : "—"}
+                  </TableCell>
                   <TableCell className="font-medium text-slate-800">{app.patient_name || "—"}</TableCell>
                   <TableCell className="text-slate-600">{app.patient_phone || "—"}</TableCell>
                   <TableCell className="font-heading font-semibold text-slate-900">
@@ -229,19 +253,40 @@ export default function DoctorAppointments() {
                   </TableCell>
                   <TableCell>{statusBadge(app.status)}</TableCell>
                   <TableCell className="text-right">
-                    {app.status === "pending" && (
-                      <div className="flex justify-end gap-2">
-                        <Button size="sm" variant="outline" className="border-emerald-500 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 bg-transparent" onClick={() => updateStatus(app, "completed")}>
-                          Confirmar
-                        </Button>
-                        <Button size="sm" variant="outline" className="border-red-500 text-red-600 hover:bg-red-50 hover:text-red-700 bg-transparent" onClick={() => updateStatus(app, "cancelled")}>
-                          Cancelar
-                        </Button>
-                        <Button size="sm" variant="ghost" className="text-slate-500 hover:bg-slate-100" onClick={() => updateStatus(app, "no_show")}>
-                          Faltou
-                        </Button>
-                      </div>
-                    )}
+                    <div className="flex justify-end gap-2 items-center">
+                      {app.status === "pending" && (
+                        <>
+                          <Button size="sm" variant="outline" className="border-emerald-500 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 bg-transparent" onClick={() => updateStatus(app, "completed")}>
+                            Confirmar
+                          </Button>
+                          <Button size="sm" variant="outline" className="border-red-500 text-red-600 hover:bg-red-50 hover:text-red-700 bg-transparent" onClick={() => updateStatus(app, "cancelled")}>
+                            Cancelar
+                          </Button>
+                          <Button size="sm" variant="ghost" className="text-slate-500 hover:bg-slate-100" onClick={() => updateStatus(app, "no_show")}>
+                            Faltou
+                          </Button>
+                        </>
+                      )}
+                      {(() => {
+                        const cleanPhone = app.patient_phone ? app.patient_phone.replace(/\D/g, '') : '';
+                        const dateFmt = app.scheduled_at ? new Date(app.scheduled_at).toLocaleDateString('pt-BR') : new Date(app.created_at).toLocaleDateString('pt-BR');
+                        const timeFmt = app.scheduled_at ? new Date(app.scheduled_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '';
+                        
+                        const msg = `Olá ${app.patient_name}! Sua consulta na Pontea está confirmada para o dia ${dateFmt}${timeFmt ? ` às ${timeFmt}` : ''}. Aguardo você! 😊`;
+                        
+                        return (
+                          <Button 
+                            size="sm" 
+                            className="bg-emerald-50 text-emerald-600 border border-emerald-200 rounded-lg hover:bg-emerald-100"
+                            onClick={() => window.open(`https://wa.me/55${cleanPhone}?text=${encodeURIComponent(msg)}`, '_blank')}
+                            disabled={!cleanPhone}
+                            title={!cleanPhone ? "Telefone não informado" : "Contato WhatsApp"}
+                          >
+                            <MessageCircle className="h-4 w-4" />
+                          </Button>
+                        );
+                      })()}
+                    </div>
                   </TableCell>
                 </TableRow>
               ))

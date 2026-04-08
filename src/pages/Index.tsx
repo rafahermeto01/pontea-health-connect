@@ -1,5 +1,7 @@
 import { Link } from "react-router-dom";
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 import { 
   Stethoscope, 
   Users, 
@@ -58,6 +60,34 @@ const features = [
 ];
 
 export default function LandingPage() {
+  useEffect(() => {
+    async function trackReferral() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const ref = urlParams.get("ref");
+      
+      if (ref) {
+        document.cookie = `pontea_ref=${ref}; max-age=2592000; path=/; SameSite=Lax`;
+        localStorage.setItem("pontea_ref", ref);
+        
+        const { data: affiliate } = await supabase
+          .from("affiliates")
+          .select("id")
+          .eq("ref_code", ref)
+          .eq("status", "approved")
+          .single();
+          
+        if (affiliate) {
+          await supabase.from("referral_clicks").insert({
+            affiliate_id: affiliate.id,
+            landing_page: "/"
+          });
+        }
+      }
+    }
+    
+    trackReferral();
+  }, []);
+
   return (
     <div className="flex flex-col gap-0 font-body">
       {/* Hero Section */}

@@ -38,7 +38,7 @@ export default function AffiliateGenerateLinks() {
   const refCode = affiliate.ref_code;
   const baseUrl = SITE_URL;
   
-  const mainLink = `${baseUrl}?ref=${refCode}`;
+  const mainLink = `${baseUrl}/buscar?ref=${refCode}`;
   
   let generatedLink = mainLink;
   if (selectedSpecialty !== "all" || selectedCity !== "all") {
@@ -79,8 +79,8 @@ export default function AffiliateGenerateLinks() {
 
       <Card className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-6">
         <CardHeader className="p-0 mb-6">
-          <CardTitle className="font-heading text-lg font-semibold text-slate-900">Seu link principal</CardTitle>
-          <CardDescription className="text-slate-500 mt-1">Use este link para convidar pacientes diretamente para a plataforma principal.</CardDescription>
+          <CardTitle className="font-heading text-lg font-semibold text-slate-900">Link do Marketplace</CardTitle>
+          <CardDescription className="text-slate-500 mt-1">Use este link para convidar pacientes diretamente para o marketplace.</CardDescription>
         </CardHeader>
         <CardContent className="p-0">
           <div className="flex gap-3 items-center">
