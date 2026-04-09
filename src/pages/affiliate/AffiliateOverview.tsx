@@ -22,10 +22,10 @@ export default function AffiliateOverview() {
 
   useEffect(() => {
     async function loadData() {
-      // 1. Total Metrics
+      // Total Metrics: clicks and appointments attributed to this affiliate
       const [{ count: clicksCount }, { count: appointmentsCount }] = await Promise.all([
         supabase.from("referral_clicks").select("*", { count: "exact", head: true }).eq("affiliate_id", affiliate.id),
-        supabase.from("appointments").select("*", { count: "exact", head: true }).eq("affiliate_id", affiliate.id)
+        supabase.from("appointments").select("*", { count: "exact", head: true }).eq("affiliate_id", affiliate.id).in("status", ["pending", "completed"])
       ]);
 
       setMetrics({

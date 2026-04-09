@@ -26,6 +26,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import DoctorDashboardLayout from "./pages/doctor/DoctorDashboardLayout";
 import DoctorOverview from "./pages/doctor/DoctorOverview";
 import DoctorAppointments from "./pages/doctor/DoctorAppointments";
+import DoctorAgenda from "./pages/doctor/DoctorAgenda";
 import DoctorProfileEdit from "./pages/doctor/DoctorProfileEdit";
 import DoctorFinancial from "./pages/doctor/DoctorFinancial";
 import DoctorReviews from "./pages/doctor/DoctorReviews";
@@ -61,6 +62,7 @@ const App = () => (
             <Route path="/dashboard/medico" element={<DoctorDashboardLayout />}>
               <Route index element={<DoctorOverview />} />
               <Route path="agendamentos" element={<DoctorAppointments />} />
+              <Route path="agenda" element={<DoctorAgenda />} />
               <Route path="perfil" element={<DoctorProfileEdit />} />
               <Route path="financeiro" element={<DoctorFinancial />} />
               <Route path="avaliacoes" element={<DoctorReviews />} />

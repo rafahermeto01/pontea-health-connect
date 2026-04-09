@@ -1,4 +1,4 @@
-import { BarChart3, Calendar, User, DollarSign, Star, LogOut } from "lucide-react";
+import { BarChart3, Calendar, User, DollarSign, Star, LogOut, Clock } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 const items = [
   { title: "Visão Geral", url: "/dashboard/medico", icon: BarChart3 },
   { title: "Agendamentos", url: "/dashboard/medico/agendamentos", icon: Calendar },
+  { title: "Minha Agenda", url: "/dashboard/medico/agenda", icon: Clock },
   { title: "Meu Perfil", url: "/dashboard/medico/perfil", icon: User },
   { title: "Financeiro", url: "/dashboard/medico/financeiro", icon: DollarSign },
   { title: "Avaliações", url: "/dashboard/medico/avaliacoes", icon: Star },

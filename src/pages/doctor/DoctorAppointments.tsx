@@ -19,18 +19,21 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { MessageCircle } from "lucide-react";
+import { MessageCircle, Loader2, AlertTriangle } from "lucide-react";
 
 export default function DoctorAppointments() {
   const { doctor } = useOutletContext<{ doctor: any }>();
   const [appointments, setAppointments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Modal states
+  // Manual registration modal states
   const [open, setOpen] = useState(false);
+  const [registering, setRegistering] = useState(false);
   const [form, setForm] = useState({
     patient_name: "",
     patient_phone: "",
@@ -40,6 +43,13 @@ export default function DoctorAppointments() {
     price_cents: doctor.consultation_price?.toString() || "0",
     ref_code: "",
   });
+
+  // Confirm completion modal states
+  const [confirmDialog, setConfirmDialog] = useState<{ open: boolean; appointment: any | null }>({
+    open: false,
+    appointment: null,
+  });
+  const [confirming, setConfirming] = useState(false);
 
   const fetchAppointments = async () => {
     setLoading(true);
@@ -62,6 +72,12 @@ export default function DoctorAppointments() {
   }, [doctor.id]);
 
   const updateStatus = async (appointment: any, newStatus: string) => {
+    // For "completed" with affiliate, use the confirmation dialog instead
+    if (newStatus === "completed" && appointment.affiliate_id) {
+      setConfirmDialog({ open: true, appointment });
+      return;
+    }
+
     const { error } = await supabase
       .from("appointments")
       .update({ status: newStatus })
@@ -72,27 +88,50 @@ export default function DoctorAppointments() {
       return;
     }
 
-    if (newStatus === "completed" && appointment.affiliate_id) {
-      // Credit affiliate direct frontend approach as requested
-      const { data: affiliate } = await supabase
-        .from("affiliates")
-        .select("id, balance_cents, total_earned_cents")
-        .eq("id", appointment.affiliate_id)
-        .single();
-
-      if (affiliate && appointment.affiliate_commission_cents) {
-        await supabase
-          .from("affiliates")
-          .update({
-            balance_cents: (affiliate.balance_cents || 0) + appointment.affiliate_commission_cents,
-            total_earned_cents: (affiliate.total_earned_cents || 0) + appointment.affiliate_commission_cents,
-          })
-          .eq("id", affiliate.id);
-      }
-    }
-
-    toast.success(`Consulta atualizada para ${newStatus}`);
+    toast.success(`Consulta atualizada para ${newStatus === "completed" ? "concluído" : newStatus === "cancelled" ? "cancelado" : "faltou"}`);
     fetchAppointments();
+  };
+
+  const handleConfirmCompletion = async () => {
+    const appointment = confirmDialog.appointment;
+    if (!appointment) return;
+    setConfirming(true);
+
+    try {
+      const { error } = await supabase
+        .from("appointments")
+        .update({ status: "completed" })
+        .eq("id", appointment.id);
+
+      if (error) throw error;
+
+      // Credit affiliate
+      if (appointment.affiliate_id && appointment.affiliate_commission_cents) {
+        const { data: affiliate } = await supabase
+          .from("affiliates")
+          .select("id, balance_cents, total_earned_cents")
+          .eq("id", appointment.affiliate_id)
+          .single();
+
+        if (affiliate) {
+          await supabase
+            .from("affiliates")
+            .update({
+              balance_cents: (affiliate.balance_cents || 0) + appointment.affiliate_commission_cents,
+              total_earned_cents: (affiliate.total_earned_cents || 0) + appointment.affiliate_commission_cents,
+            })
+            .eq("id", affiliate.id);
+        }
+      }
+
+      toast.success("Consulta confirmada como realizada.");
+      setConfirmDialog({ open: false, appointment: null });
+      fetchAppointments();
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao confirmar consulta");
+    } finally {
+      setConfirming(false);
+    }
   };
 
   const statusBadge = (status: string) => {
@@ -107,7 +146,31 @@ export default function DoctorAppointments() {
 
   const handleRegister = async (e: FormEvent) => {
     e.preventDefault();
+    if (registering) return;
+    setRegistering(true);
+
     try {
+      const patientName = form.patient_name.trim();
+      const patientPhone = form.patient_phone.replace(/\D/g, "");
+      const patientEmail = form.patient_email.trim();
+
+      // Validations
+      if (patientName.length < 3) {
+        toast.error("O nome deve ter pelo menos 3 caracteres.");
+        setRegistering(false);
+        return;
+      }
+      if (patientPhone && (patientPhone.length < 10 || patientPhone.length > 11)) {
+        toast.error("Telefone deve ter 10 ou 11 dígitos.");
+        setRegistering(false);
+        return;
+      }
+      if (patientEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(patientEmail)) {
+        toast.error("E-mail inválido.");
+        setRegistering(false);
+        return;
+      }
+
       let affiliate_id = null;
       let ref_code = null;
       let commission_cents = 0;
@@ -135,9 +198,9 @@ export default function DoctorAppointments() {
       const { error } = await supabase.from("appointments").insert({
         doctor_id: doctor.id,
         affiliate_id,
-        patient_name: form.patient_name,
-        patient_phone: form.patient_phone,
-        patient_email: form.patient_email,
+        patient_name: patientName,
+        patient_phone: patientPhone,
+        patient_email: patientEmail || null,
         price_cents: priceVal,
         platform_fee_cents: Math.round(priceVal * 0.20),
         affiliate_commission_cents: commission_cents,
@@ -155,6 +218,8 @@ export default function DoctorAppointments() {
       fetchAppointments();
     } catch (err: any) {
       toast.error(err.message || "Erro ao registrar consulta");
+    } finally {
+      setRegistering(false);
     }
   };
 
@@ -181,7 +246,7 @@ export default function DoctorAppointments() {
               </div>
               <div>
                 <Label className="text-sm font-medium text-slate-700">Telefone</Label>
-                <Input className="bg-slate-50 border border-slate-200 rounded-xl focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:border-teal-500" value={form.patient_phone} onChange={e => setForm({...form, patient_phone: e.target.value})} />
+                <Input className="bg-slate-50 border border-slate-200 rounded-xl focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:border-teal-500" value={form.patient_phone} onChange={e => setForm({...form, patient_phone: e.target.value})} placeholder="(31) 99999-9999" />
               </div>
               <div>
                 <Label className="text-sm font-medium text-slate-700">E-mail</Label>
@@ -203,11 +268,41 @@ export default function DoctorAppointments() {
                 <Label className="text-sm font-medium text-slate-700">Código do Afiliado (Opcional)</Label>
                 <Input className="bg-slate-50 border border-slate-200 rounded-xl focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:border-teal-500" value={form.ref_code} onChange={e => setForm({...form, ref_code: e.target.value})} placeholder="ex: joao_x1y2" />
               </div>
-              <Button type="submit" className="w-full bg-teal-600 text-white rounded-xl hover:bg-teal-700">Salvar</Button>
+              <Button type="submit" disabled={registering} className="w-full bg-teal-600 text-white rounded-xl hover:bg-teal-700">
+                {registering ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Salvando…</> : "Salvar"}
+              </Button>
             </form>
           </DialogContent>
         </Dialog>
       </div>
+
+      {/* Confirmation Dialog for completing appointments with affiliate */}
+      <Dialog open={confirmDialog.open} onOpenChange={(v) => setConfirmDialog({ open: v, appointment: v ? confirmDialog.appointment : null })}>
+        <DialogContent className="sm:max-w-md bg-white border border-slate-200 rounded-2xl shadow-xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 font-heading text-lg font-semibold text-slate-900">
+              <AlertTriangle className="h-5 w-5 text-amber-500" />
+              Confirmar Consulta Realizada
+            </DialogTitle>
+            <DialogDescription className="text-slate-500 mt-2">
+              Confirmar que esta consulta foi realizada? A comissão do afiliado será creditada.
+              {confirmDialog.appointment?.affiliate_commission_cents && (
+                <span className="block mt-1 font-medium text-slate-700">
+                  Comissão: {((confirmDialog.appointment.affiliate_commission_cents || 0) / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                </span>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex gap-2 sm:gap-2 mt-4">
+            <Button variant="outline" onClick={() => setConfirmDialog({ open: false, appointment: null })} className="rounded-xl border-slate-200">
+              Cancelar
+            </Button>
+            <Button onClick={handleConfirmCompletion} disabled={confirming} className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl">
+              {confirming ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Processando…</> : "Sim, consulta realizada"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden">
         <Table>
@@ -248,12 +343,20 @@ export default function DoctorAppointments() {
                   <TableCell className="font-heading font-semibold text-slate-900">
                     {((app.price_cents || 0) / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
                   </TableCell>
-                  <TableCell className="text-slate-600">
-                    {app.affiliates?.ref_code || app.ref_code || "Direto"}
+                  <TableCell>
+                    {app.ref_code ? (
+                      <div className="flex items-center gap-1.5">
+                        <Badge className="bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-none shadow-none text-[11px]">Via Afiliado</Badge>
+                        <span className="text-xs text-slate-400">{app.affiliates?.ref_code || app.ref_code}</span>
+                      </div>
+                    ) : (
+                      <span className="text-slate-500 text-sm">Agendamento direto</span>
+                    )}
                   </TableCell>
                   <TableCell>{statusBadge(app.status)}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2 items-center">
+                      {/* Only show action buttons for pending status */}
                       {app.status === "pending" && (
                         <>
                           <Button size="sm" variant="outline" className="border-emerald-500 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 bg-transparent" onClick={() => updateStatus(app, "completed")}>
@@ -267,6 +370,7 @@ export default function DoctorAppointments() {
                           </Button>
                         </>
                       )}
+                      {/* WhatsApp button always visible if phone exists */}
                       {(() => {
                         const cleanPhone = app.patient_phone ? app.patient_phone.replace(/\D/g, '') : '';
                         const dateFmt = app.scheduled_at ? new Date(app.scheduled_at).toLocaleDateString('pt-BR') : new Date(app.created_at).toLocaleDateString('pt-BR');

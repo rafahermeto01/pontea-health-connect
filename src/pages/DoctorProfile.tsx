@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { MapPin, Award, ExternalLink, GraduationCap, Clock } from "lucide-react";
+import { MapPin, Award, ExternalLink, GraduationCap, Clock, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import StarRating from "@/components/StarRating";
 import { supabase } from "@/integrations/supabase/client";
+import BookingModal from "@/components/BookingModal";
 
 export default function DoctorProfile() {
   const { slug } = useParams();
@@ -12,6 +13,8 @@ export default function DoctorProfile() {
   const [reviews, setReviews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [hasNativeAvailability, setHasNativeAvailability] = useState(false);
+  const [bookingOpen, setBookingOpen] = useState(false);
 
   useEffect(() => {
     async function loadProfile() {
@@ -31,6 +34,15 @@ export default function DoctorProfile() {
       }
       
       setDoctor(data);
+
+      // Check if doctor has native availability configured
+      const { data: avail, error: availErr } = await supabase
+        .from("doctor_availability" as any)
+        .select("id")
+        .eq("doctor_id", data.id)
+        .eq("is_active", true)
+        .limit(1);
+      setHasNativeAvailability(!availErr && !!avail && avail.length > 0);
       
       const { data: revs } = await supabase
         .from("doctor_reviews")
@@ -224,7 +236,15 @@ export default function DoctorProfile() {
               )}
             </div>
             
-            {doctor.calendar_link ? (
+            {hasNativeAvailability ? (
+              <Button
+                className="w-full bg-teal-600 hover:bg-teal-700 text-white"
+                size="lg"
+                onClick={() => setBookingOpen(true)}
+              >
+                <CalendarDays className="mr-2 h-4 w-4" /> Agendar Consulta
+              </Button>
+            ) : doctor.calendar_link ? (
               <Button className="w-full" size="lg" onClick={handleAgendar}>
                 <ExternalLink className="mr-2 h-4 w-4" /> Agendar Consulta
               </Button>
@@ -236,6 +256,15 @@ export default function DoctorProfile() {
           </div>
         </div>
       </div>
+
+      {/* Native Booking Modal */}
+      {hasNativeAvailability && (
+        <BookingModal
+          open={bookingOpen}
+          onOpenChange={setBookingOpen}
+          doctor={doctor}
+        />
+      )}
     </div>
   );
 }
