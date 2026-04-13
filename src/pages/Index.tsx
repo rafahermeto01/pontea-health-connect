@@ -2,6 +2,8 @@ import { Link } from "react-router-dom";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import SEOHead from "@/components/SEOHead";
+import { SchemaMarkup, getOrganizationSchema, getWebsiteSchema } from "@/components/SchemaMarkup";
 import { 
   Stethoscope, 
   Users, 
@@ -17,7 +19,7 @@ import {
   ChevronRight,
   CheckCircle2,
   Search,
-  UserPlus
+  MapPin
 } from "lucide-react";
 
 const howItWorks = [
@@ -49,8 +51,6 @@ const specialtiesData = [
   { icon: Bone, name: "Ortopedia", count: "112 médicos" },
   { icon: Heart, name: "Nutrição", count: "156 médicos" },
 ];
-
-import { MapPin } from "lucide-react";
 
 const features = [
   { title: "Médicos Verificados", desc: "Todos os profissionais possuem CRM validado e perfil verificado pela nossa equipe.", icon: ShieldCheck },
@@ -90,6 +90,14 @@ export default function LandingPage() {
 
   return (
     <div className="flex flex-col gap-0 font-body">
+      <SEOHead 
+        title="Pontea Saúde — A ponte entre você e o seu médico"
+        description="Encontre especialistas verificados, compare avaliações reais e agende sua consulta em poucos cliques."
+        canonical="https://ponteasaude.com.br"
+      />
+      <SchemaMarkup data={getOrganizationSchema()} />
+      <SchemaMarkup data={getWebsiteSchema()} />
+
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-white py-20 lg:py-32">
         <div className="absolute inset-0 pointer-events-none">
@@ -108,7 +116,7 @@ export default function LandingPage() {
           </h1>
           
           <p className="mx-auto mt-8 max-w-2xl text-xl text-slate-500 leading-relaxed">
-            Encontre especialistas verificados, compare avaliações reais de pacientes e agende sua consulta em poucos cliques.
+            A Pontea Saúde é uma plataforma de agendamento médico que facilita a conexão direta entre pacientes e especialistas verificados, permitindo marcar consultas em menos de 1 minuto.
           </p>
           
           <div className="mt-12 flex flex-wrap justify-center gap-4">
@@ -147,8 +155,8 @@ export default function LandingPage() {
       <section className="bg-slate-50/80 py-24">
         <div className="container">
           <div className="mb-16 text-center">
-            <h2 className="font-heading text-3xl font-bold text-slate-900 sm:text-4xl">Como Funciona</h2>
-            <p className="mt-4 text-slate-500">Três passos simples para cuidar da sua saúde</p>
+            <h2 className="font-heading text-3xl font-bold text-slate-900 sm:text-4xl">Como Funciona a Pontea</h2>
+            <p className="mt-4 text-slate-500">Agendar uma consulta online é um processo simples de três etapas que economiza tempo e garante atendimento de qualidade.</p>
           </div>
           
           <div className="grid gap-8 md:grid-cols-3">
@@ -172,8 +180,8 @@ export default function LandingPage() {
       <section className="container py-24">
         <div className="mb-16 flex items-end justify-between">
           <div className="text-left">
-            <h2 className="font-heading text-3xl font-bold text-slate-900 sm:text-4xl">Especialidades em Destaque</h2>
-            <p className="mt-4 text-slate-500">Encontre os melhores profissionais</p>
+            <h2 className="font-heading text-3xl font-bold text-slate-900 sm:text-4xl">Especialidades Médicas</h2>
+            <p className="mt-4 text-slate-500">Nossa rede conta com mais de 800 especialistas em diversas áreas para atender você.</p>
           </div>
           <Link to="/buscar" className="hidden items-center gap-2 text-primary font-bold hover:underline md:flex">
             Ver todas <ChevronRight className="h-4 w-4" />
@@ -205,10 +213,10 @@ export default function LandingPage() {
           <div className="grid gap-16 lg:grid-cols-2 lg:items-center">
             <div>
               <h2 className="font-heading text-3xl font-bold text-slate-900 sm:text-4xl leading-tight">
-                Por que escolher a Pontea para sua saúde?
+                Vantagens de escolher um marketplace médico
               </h2>
               <p className="mt-6 text-lg text-slate-500 leading-relaxed">
-                Nascemos para resolver a burocracia do agendamento médico. Nossa plataforma garante segurança para pacientes e visibilidade para médicos.
+                Um marketplace médico como a Pontea resolve a burocracia do agendamento tradicional. Oferecemos 100% de transparência em preços e avaliações, garantindo que você escolha o profissional ideal baseado em dados reais.
               </p>
               
               <div className="mt-10 grid gap-8 sm:grid-cols-2">
@@ -244,12 +252,12 @@ export default function LandingPage() {
             Pronto para cuidar da sua saúde?
           </h2>
           <p className="mx-auto mt-6 max-w-xl text-lg text-teal-50 opacity-90">
-            Encontre o especialista certo para você em minutos.
+            Encontre o especialista certo e agende sua consulta particular em menos de 1 minuto.
           </p>
           <div className="mt-10">
             <Link to="/buscar">
               <Button size="lg" className="h-16 rounded-2xl bg-white px-10 text-xl font-black text-primary hover:bg-teal-50 transition-all hover:scale-[1.05]">
-                Buscar Médicos
+                Buscar Médicos Agora
               </Button>
             </Link>
           </div>

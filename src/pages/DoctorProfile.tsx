@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import StarRating from "@/components/StarRating";
 import { supabase } from "@/integrations/supabase/client";
 import BookingModal from "@/components/BookingModal";
+import SEOHead from "@/components/SEOHead";
+import { SchemaMarkup, getDoctorSchema, getBreadcrumbSchema } from "@/components/SchemaMarkup";
 
 export default function DoctorProfile() {
   const { slug } = useParams();
@@ -137,6 +139,18 @@ export default function DoctorProfile() {
 
   return (
     <div className="container py-8">
+      <SEOHead 
+        title={`Dr(a). ${doctor.full_name} — ${doctor.specialty} — Pontea Saúde`}
+        description={`Agende consulta com Dr(a). ${doctor.full_name}, ${doctor.specialty} em ${doctor.city}/${doctor.state}. CRM ${doctor.crm_number}/${doctor.crm_state}.`}
+        canonical={`https://ponteasaude.com.br/dr/${doctor.slug}`}
+        ogImage={doctor.avatar_url}
+      />
+      <SchemaMarkup data={getDoctorSchema(doctor, reviews)} />
+      <SchemaMarkup data={getBreadcrumbSchema([
+        { name: "Início", url: "/" },
+        { name: "Buscar", url: "/buscar" },
+        { name: doctor.full_name, url: `/dr/${slug}` }
+      ])} />
       <div className="flex flex-col gap-8 lg:flex-row">
         {/* Main */}
         <div className="flex-1">

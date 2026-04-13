@@ -1,12 +1,25 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Check, TrendingUp, Users, Shield } from "lucide-react";
+import SEOHead from "@/components/SEOHead";
+import { SchemaMarkup, getFAQSchema, getBreadcrumbSchema } from "@/components/SchemaMarkup";
 
 const benefits = [
   { icon: TrendingUp, text: "Visibilidade para pacientes que já estão buscando sua especialidade" },
   { icon: Shield, text: "Perfil profissional completo com CRM verificado e avaliações" },
   { icon: Check, text: "Agenda integrada — pacientes agendam direto no seu Cal.com, Calendly ou WhatsApp" },
   { icon: Users, text: "Sem custo por clique — mensalidade fixa e previsível" },
+];
+
+const faqs = [
+  { 
+    q: "O que é a Pontea Saúde para médicos?", 
+    a: "A Pontea Saúde é um marketplace médico que conecta profissionais de saúde a milhares de pacientes em busca de consultas particulares, oferecendo ferramentas de agendamento e visibilidade online." 
+  },
+  { 
+    q: "Quanto custa anunciar meu consultório na Pontea?", 
+    a: "Oferecemos planos a partir de R$ 149/mês para o perfil básico e R$ 399/mês para o plano Pro com destaque na busca e agendamentos ilimitados." 
+  }
 ];
 
 const plans = [
@@ -23,12 +36,22 @@ const plans = [
 export default function ForDoctorsPage() {
   return (
     <div className="container py-16">
+      <SEOHead 
+        title="Para Médicos — Pontea Saúde"
+        description="Cadastre seu perfil e receba novos pacientes todos os meses sem investir em marketing."
+        canonical="https://ponteasaude.com.br/para-medicos"
+      />
+      <SchemaMarkup data={getFAQSchema(faqs)} />
+      <SchemaMarkup data={getBreadcrumbSchema([
+        { name: "Início", url: "/" },
+        { name: "Para Médicos", url: "/para-medicos" }
+      ])} />
       <div className="mx-auto max-w-3xl text-center">
         <h1 className="text-3xl font-extrabold text-foreground sm:text-4xl text-slate-900 font-heading">
           Receba novos pacientes <span className="text-primary block mt-2">todos os meses</span>
         </h1>
         <p className="mt-4 text-lg text-slate-500">
-          Cadastre seu perfil na Pontea e seja encontrado por milhares de pacientes que buscam especialistas como você. Sem investir em marketing.
+          A Pontea Saúde é uma plataforma de marketing médico que conecta especialistas verificados a pacientes qualificados, permitindo que você aumente sua base de pacientes particulares sem investir em anúncios complexos.
         </p>
       </div>
 

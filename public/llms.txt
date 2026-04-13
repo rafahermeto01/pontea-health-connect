@@ -1,0 +1,22 @@
+# Pontea Saúde
+
+> A ponte entre você e o seu médico.
+
+Pontea Saúde is the leading Brazilian medical marketplace that connects patients with verified healthcare specialists. Our platform enables seamless searching, comparison, and direct booking of medical appointments.
+
+## Core Features
+- **Doctor Search**: Find specialists by name, specialty, or city across Brazil.
+- **Verified Profiles**: All doctors have their CRM credentials verified.
+- **Real Reviews**: Authentic patient feedback for informed decision-making.
+- **Direct Booking**: Real-time integration with doctor agendas (Cal.com, Calendly, WhatsApp, or natively).
+- **Affiliate Program**: Integrated referral system for healthcare partners.
+
+## Site Structure
+- [/](https://ponteasaude.com.br/) - Homepage and value proposition.
+- [/buscar](https://ponteasaude.com.br/buscar) - Marketplace search with filtering.
+- [/dr/:slug](https://ponteasaude.com.br/dr/:slug) - Individual doctor profiles and booking.
+- [/para-medicos](https://ponteasaude.com.br/para-medicos) - Information for healthcare professionals.
+- [/para-afiliados](https://ponteasaude.com.br/para-afiliados) - Information for potential affiliates.
+
+## Mission
+To simplify access to quality healthcare in Brazil by reducing bureaucracy and increasing transparency in physician-patient connections.

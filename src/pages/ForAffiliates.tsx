@@ -4,12 +4,25 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { DollarSign, Share2, TrendingUp, Zap } from "lucide-react";
+import SEOHead from "@/components/SEOHead";
+import { SchemaMarkup, getFAQSchema, getBreadcrumbSchema } from "@/components/SchemaMarkup";
 
 const benefits = [
   { icon: DollarSign, title: "Comissão Direta", desc: "Comissão por cada consulta agendada pelo seu link." },
   { icon: Share2, title: "Links Únicos", desc: "Links personalizados por especialidade e cidade." },
   { icon: TrendingUp, title: "Dashboard Transparente", desc: "Painel completo com cliques, conversões e ganhos em tempo real." },
   { icon: Zap, title: "Saque na Hora", desc: "Saques via PIX quando quiser." },
+];
+
+const faqs = [
+  { 
+    q: "O que é o Programa de Afiliados da Pontea?", 
+    a: "O Programa de Afiliados da Pontea Saúde é uma oportunidade para criadores de conteúdo e profissionais de saúde monetizarem sua audiência recomendando médicos verificados, recebendo comissões por cada agendamento confirmado." 
+  },
+  { 
+    q: "Como recebo minhas comissões?", 
+    a: "As comissões são creditadas automaticamente assim que o pagamento da consulta é confirmado via PIX ou cartão, e você pode solicitar o saque via PIX diretamente no seu painel." 
+  }
 ];
 
 export default function ForAffiliatesPage() {
@@ -21,12 +34,22 @@ export default function ForAffiliatesPage() {
 
   return (
     <div className="container py-16">
+      <SEOHead 
+        title="Para Afiliados — Pontea Saúde"
+        description="Monetize sua audiência conectando pessoas a médicos de confiança. Ganhe comissão por cada consulta."
+        canonical="https://ponteasaude.com.br/para-affiliados"
+      />
+      <SchemaMarkup data={getFAQSchema(faqs)} />
+      <SchemaMarkup data={getBreadcrumbSchema([
+        { name: "Início", url: "/" },
+        { name: "Para Afiliados", url: "/para-afiliados" }
+      ])} />
       <div className="mx-auto max-w-3xl text-center">
         <h1 className="text-3xl font-extrabold text-slate-900 sm:text-4xl font-heading">
           Monetize sua audiência conectando <span className="text-primary block mt-2">pessoas a médicos de confiança</span>
         </h1>
         <p className="mt-4 text-lg text-slate-500">
-          Se você é influenciador fitness, personal trainer, nutricionista ou profissional de saúde, ganhe comissão por cada paciente que agendar uma consulta através do seu link.
+          O Programa de Afiliados da Pontea Saúde permite que influenciadores e profissionais do bem-estar ajudem seus seguidores a encontrar atendimento médico de qualidade enquanto geram renda extra através de comissões por agendamento.
         </p>
       </div>
 

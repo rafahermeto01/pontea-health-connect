@@ -10,6 +10,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import DoctorCard from "@/components/DoctorCard";
 import { useDoctors, useFilterOptions, type SortOption } from "@/hooks/useDoctors";
 import { supabase } from "@/integrations/supabase/client";
+import SEOHead from "@/components/SEOHead";
+import { SchemaMarkup, getBreadcrumbSchema } from "@/components/SchemaMarkup";
 
 export default function BuscarPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -231,6 +233,15 @@ export default function BuscarPage() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFB]">
+      <SEOHead 
+        title="Encontrar Médico — Pontea Saúde"
+        description="Busque médicos por especialidade, cidade e preço. Compare avaliações e agende sua consulta online."
+        canonical="https://ponteasaude.com.br/buscar"
+      />
+      <SchemaMarkup data={getBreadcrumbSchema([
+        { name: "Início", url: "/" },
+        { name: "Buscar", url: "/buscar" }
+      ])} />
       {/* HEADER DE BUSCA */}
       <div className="sticky top-16 z-30 bg-white border-b border-slate-100 shadow-sm">
         <div className="container py-4">

@@ -1,14 +1,32 @@
+User-agent: *
+Allow: /
+
+# AI Bots
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
 User-agent: Googlebot
 Allow: /
 
-User-agent: Bingbot
+User-agent: bingbot
 Allow: /
 
-User-agent: Twitterbot
+User-agent: Applebot-Extended
 Allow: /
 
-User-agent: facebookexternalhit
-Allow: /
-
-User-agent: *
-Allow: /
+Sitemap: https://ponteasaude.com.br/sitemap.xml
