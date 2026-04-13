@@ -234,7 +234,7 @@ export default function BookingModal({ open, onOpenChange, doctor }: Props) {
     );
     const duration = doctor.consultation_duration || 30;
     const slots: string[] = [];
-    const now = new Date();
+    const nowBrasilia = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
     const isTodayDate = isToday(selectedDate);
 
     periods.forEach((p) => {
@@ -244,7 +244,7 @@ export default function BookingModal({ open, onOpenChange, doctor }: Props) {
         const t = format(cur, "HH:mm");
         const tEnd = format(addMinutes(cur, duration), "HH:mm");
 
-        if (isTodayDate && isBefore(cur, now)) {
+        if (isTodayDate && isBefore(cur, nowBrasilia)) {
           cur = addMinutes(cur, duration);
           continue;
         }
@@ -303,9 +303,10 @@ export default function BookingModal({ open, onOpenChange, doctor }: Props) {
 
     try {
       const dateStr = format(selectedDate, "yyyy-MM-dd");
-      const scheduledAt = `${dateStr}T${selectedTime}:00`;
+      const scheduledAt = `${dateStr}T${selectedTime}:00-03:00`;
 
-      if (isBefore(parseISO(scheduledAt), new Date())) {
+      const nowBrasilia = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
+      if (isBefore(parseISO(scheduledAt), nowBrasilia)) {
         toast.error("Não é possível agendar em um horário que já passou.");
         setSubmitting(false);
         return;
@@ -345,7 +346,7 @@ export default function BookingModal({ open, onOpenChange, doctor }: Props) {
           patient_phone: digitsOnly(form.phone),
           patient_email: form.email ? sanitize(form.email) : null,
           patient_cpf: cpfClean,
-          scheduled_at: new Date(scheduledAt).toISOString(),
+          scheduled_at: scheduledAt,
           price_cents: doctor.consultation_price,
           ref_code: refCode,
         }),

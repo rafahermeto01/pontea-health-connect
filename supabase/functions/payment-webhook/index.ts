@@ -15,6 +15,23 @@ serve(async (req) => {
     if (!appointment) return new Response("OK", { status: 200 })
     if (event === "PAYMENT_CONFIRMED" || event === "PAYMENT_RECEIVED") {
       await supabase.from("appointments").update({ payment_status: "paid", status: "confirmed" }).eq("id", appointment.id)
+      // Credit affiliate commission automatically
+      if (appointment.affiliate_id && appointment.affiliate_commission_cents > 0) {
+        const { data: affiliate } = await supabase
+          .from("affiliates")
+          .select("id, balance_cents, total_earned_cents")
+          .eq("id", appointment.affiliate_id)
+          .single()
+        if (affiliate) {
+          await supabase
+            .from("affiliates")
+            .update({
+              balance_cents: (affiliate.balance_cents || 0) + appointment.affiliate_commission_cents,
+              total_earned_cents: (affiliate.total_earned_cents || 0) + appointment.affiliate_commission_cents,
+            })
+            .eq("id", affiliate.id)
+        }
+      }
     } else if (event === "PAYMENT_OVERDUE") {
       await supabase.from("appointments").update({ payment_status: "overdue", status: "cancelled" }).eq("id", appointment.id)
     } else if (event === "PAYMENT_DELETED" || event === "PAYMENT_REFUNDED") {

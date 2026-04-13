@@ -48,6 +48,8 @@ export default function AffiliateCommissions() {
     switch (status) {
       case "completed":
         return <Badge className="bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-none shadow-none">Concluído</Badge>;
+      case "confirmed":
+        return <Badge className="bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-none shadow-none">Confirmado</Badge>;
       case "pending":
         return <Badge className="bg-amber-50 text-amber-700 hover:bg-amber-100 border-none shadow-none">Pendente</Badge>;
       case "cancelled":
@@ -102,7 +104,7 @@ export default function AffiliateCommissions() {
                   commissions.map((row, i) => (
                     <TableRow key={i} className="hover:bg-slate-50/80 border-b border-slate-100">
                       <TableCell className="text-slate-600">
-                        {new Date(row.created_at).toLocaleDateString("pt-BR")}
+                        {new Date(row.created_at).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" })}
                       </TableCell>
                       <TableCell className="text-slate-800 font-medium whitespace-nowrap">
                         {row.doctors?.full_name || "—"}

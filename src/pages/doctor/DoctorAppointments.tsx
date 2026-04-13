@@ -193,7 +193,7 @@ export default function DoctorAppointments() {
         }
       }
 
-      const scheduled_at = new Date(`${form.date}T${form.time}`).toISOString();
+      const scheduled_at = `${form.date}T${form.time}:00-03:00`;
 
       const { error } = await supabase.from("appointments").insert({
         doctor_id: doctor.id,
@@ -330,12 +330,12 @@ export default function DoctorAppointments() {
                 <TableRow key={app.id} className="hover:bg-slate-50/80 border-b border-slate-100">
                   <TableCell className="text-slate-600 font-medium">
                     {app.scheduled_at 
-                      ? new Date(app.scheduled_at).toLocaleDateString("pt-BR") 
-                      : new Date(app.created_at).toLocaleDateString("pt-BR")}
+                      ? new Date(app.scheduled_at).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" }) 
+                      : new Date(app.created_at).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" })}
                   </TableCell>
                   <TableCell className="text-slate-600">
                     {app.scheduled_at 
-                      ? new Date(app.scheduled_at).toLocaleTimeString("pt-BR", { hour: '2-digit', minute: '2-digit' }) 
+                      ? new Date(app.scheduled_at).toLocaleTimeString("pt-BR", { hour: '2-digit', minute: '2-digit', timeZone: "America/Sao_Paulo" }) 
                       : "—"}
                   </TableCell>
                   <TableCell className="font-medium text-slate-800">{app.patient_name || "—"}</TableCell>
@@ -373,8 +373,8 @@ export default function DoctorAppointments() {
                       {/* WhatsApp button always visible if phone exists */}
                       {(() => {
                         const cleanPhone = app.patient_phone ? app.patient_phone.replace(/\D/g, '') : '';
-                        const dateFmt = app.scheduled_at ? new Date(app.scheduled_at).toLocaleDateString('pt-BR') : new Date(app.created_at).toLocaleDateString('pt-BR');
-                        const timeFmt = app.scheduled_at ? new Date(app.scheduled_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '';
+                        const dateFmt = app.scheduled_at ? new Date(app.scheduled_at).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' }) : new Date(app.created_at).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+                        const timeFmt = app.scheduled_at ? new Date(app.scheduled_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' }) : '';
                         
                         const msg = `Olá ${app.patient_name}! Sua consulta na Pontea está confirmada para o dia ${dateFmt}${timeFmt ? ` às ${timeFmt}` : ''}. Aguardo você! 😊`;
                         

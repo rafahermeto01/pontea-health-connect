@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Wallet, Landmark } from "lucide-react";
+import { Wallet, Landmark, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -30,6 +30,7 @@ export default function AffiliatePayouts() {
   const { affiliate } = useOutletContext<{ affiliate: any }>();
   const [payouts, setPayouts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [totalEarned, setTotalEarned] = useState(0);
   
   // Modal state
   const [open, setOpen] = useState(false);
@@ -46,6 +47,19 @@ export default function AffiliatePayouts() {
       .order("created_at", { ascending: false });
 
     setPayouts(data || []);
+
+    // Calculate total earned from paid appointments
+    const { data: earnedData } = await supabase
+      .from("appointments")
+      .select("affiliate_commission_cents")
+      .eq("affiliate_id", affiliate.id)
+      .eq("payment_status", "paid");
+
+    const earned = (earnedData || []).reduce(
+      (sum: number, row: any) => sum + (row.affiliate_commission_cents || 0), 0
+    );
+    setTotalEarned(earned);
+
     setLoading(false);
   };
 
@@ -137,15 +151,28 @@ export default function AffiliatePayouts() {
       <Card className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-6">
         <CardContent className="p-0">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div>
-              <p className="text-sm font-medium text-slate-500 uppercase tracking-wider">Saldo Disponível</p>
-              <div className="flex items-center gap-2 mt-2">
-                <div className="h-10 w-10 rounded-full bg-emerald-50 flex items-center justify-center shrink-0">
-                  <Wallet className="h-5 w-5 text-emerald-600" />
+            <div className="flex flex-col sm:flex-row gap-6">
+              <div>
+                <p className="text-sm font-medium text-slate-500 uppercase tracking-wider">Saldo Disponível</p>
+                <div className="flex items-center gap-2 mt-2">
+                  <div className="h-10 w-10 rounded-full bg-emerald-50 flex items-center justify-center shrink-0">
+                    <Wallet className="h-5 w-5 text-emerald-600" />
+                  </div>
+                  <span className="font-heading text-3xl font-bold text-slate-900">
+                    {formatBRL(affiliate.balance_cents)}
+                  </span>
                 </div>
-                <span className="font-heading text-3xl font-bold text-slate-900">
-                  {formatBRL(affiliate.balance_cents)}
-                </span>
+              </div>
+              <div className="sm:border-l sm:pl-6 border-slate-200">
+                <p className="text-sm font-medium text-slate-500 uppercase tracking-wider">Total Ganho</p>
+                <div className="flex items-center gap-2 mt-2">
+                  <div className="h-10 w-10 rounded-full bg-teal-50 flex items-center justify-center shrink-0">
+                    <TrendingUp className="h-5 w-5 text-teal-600" />
+                  </div>
+                  <span className="font-heading text-3xl font-bold text-teal-700">
+                    {formatBRL(totalEarned)}
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -228,7 +255,7 @@ export default function AffiliatePayouts() {
                   payouts.map((row, i) => (
                     <TableRow key={i} className="hover:bg-slate-50/80 border-b border-slate-100">
                       <TableCell className="text-slate-600 font-medium">
-                        {new Date(row.created_at).toLocaleDateString("pt-BR")}
+                        {new Date(row.created_at).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" })}
                       </TableCell>
                       <TableCell className="text-slate-900 font-heading font-bold">
                         {formatBRL(row.amount_cents)}
@@ -240,7 +267,7 @@ export default function AffiliatePayouts() {
                         {getStatusBadge(row.status)}
                       </TableCell>
                       <TableCell className="text-slate-500 text-sm font-medium">
-                        {row.processed_at ? new Date(row.processed_at).toLocaleDateString("pt-BR") : "—"}
+                        {row.processed_at ? new Date(row.processed_at).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" }) : "—"}
                       </TableCell>
                     </TableRow>
                   ))

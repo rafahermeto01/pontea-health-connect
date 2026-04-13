@@ -10,6 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { DollarSign, WalletCards } from "lucide-react";
 
 export default function DoctorFinancial() {
@@ -23,7 +24,7 @@ export default function DoctorFinancial() {
         .from("appointments")
         .select("*")
         .eq("doctor_id", doctor.id)
-        .eq("status", "completed")
+        .in("status", ["completed", "confirmed"])
         .order("created_at", { ascending: false });
 
       setAppointments(data || []);
@@ -37,6 +38,19 @@ export default function DoctorFinancial() {
   const totalNet = totalGross - totalFees;
 
   const formatBRL = (cents: number) => (cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+  const getPaymentBadge = (status: string) => {
+    switch (status) {
+      case "paid":
+        return <Badge className="bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-none shadow-none">Pago</Badge>;
+      case "pending":
+        return <Badge className="bg-amber-50 text-amber-700 hover:bg-amber-100 border-none shadow-none">Pendente</Badge>;
+      case "refunded":
+        return <Badge className="bg-red-50 text-red-700 hover:bg-red-100 border-none shadow-none">Reembolsado</Badge>;
+      default:
+        return <Badge variant="outline" className="text-slate-500 border-slate-200">{status || "—"}</Badge>;
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -90,25 +104,29 @@ export default function DoctorFinancial() {
               <TableHead className="text-right">Valor Bruto</TableHead>
               <TableHead className="text-right">Taxa (Pontea)</TableHead>
               <TableHead className="text-right">Valor Líquido</TableHead>
+              <TableHead>Pagamento</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {appointments.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
                   {loading ? "Carregando..." : "Nenhuma consulta faturada ainda."}
                 </TableCell>
               </TableRow>
             ) : (
               appointments.map((app) => (
                 <TableRow key={app.id} className="hover:bg-slate-50/80 border-b border-slate-100">
-                  <TableCell className="text-slate-600">{new Date(app.created_at).toLocaleDateString("pt-BR")}</TableCell>
+                  <TableCell className="text-slate-600">
+                    {new Date(app.created_at).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" })}
+                  </TableCell>
                   <TableCell className="font-medium text-slate-800">{app.patient_name || "—"}</TableCell>
                   <TableCell className="text-right font-heading font-semibold text-slate-600">{formatBRL(app.price_cents || 0)}</TableCell>
                   <TableCell className="text-right font-heading font-semibold text-red-500">-{formatBRL(app.platform_fee_cents || 0)}</TableCell>
                   <TableCell className="text-right font-heading font-semibold text-emerald-600">
                     {formatBRL((app.price_cents || 0) - (app.platform_fee_cents || 0))}
                   </TableCell>
+                  <TableCell>{getPaymentBadge(app.payment_status)}</TableCell>
                 </TableRow>
               ))
             )}
