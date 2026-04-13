@@ -15,6 +15,7 @@ import {
   CalendarDays,
   Clock,
   MessageCircle,
+  Copy,
 } from "lucide-react";
 import {
   format,
@@ -51,6 +52,11 @@ type Props = {
 };
 
 /* ─── helpers ─── */
+function getCookie(name: string): string | null {
+  const match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"));
+  return match ? match[2] : null;
+}
+
 const DAY_LABELS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
 const sanitize = (s: string) => s.replace(/<[^>]*>/g, "").trim();
@@ -64,10 +70,13 @@ const formatPhone = (raw: string) => {
   return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7, 11)}`;
 };
 
-const getRefCode = () => {
-  const local = localStorage.getItem("pontea_ref");
-  const cookieMatch = document.cookie.match(/(?:^;\s*)pontea_ref=([^;]*)/);
-  return local || (cookieMatch ? cookieMatch[1] : null);
+const applyCpfMask = (v: string) => {
+  let val = digitsOnly(v);
+  if (val.length > 11) val = val.substring(0, 11);
+  return val
+    .replace(/(\d{3})(\d)/, "$1.$2")
+    .replace(/(\d{3})\.(\d{3})(\d)/, "$1.$2.$3")
+    .replace(/(\d{3})\.(\d{3})\.(\d{3})(\d)/, "$1.$2.$3-$4");
 };
 
 const SESSION_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
@@ -84,10 +93,42 @@ export default function BookingModal({ open, onOpenChange, doctor }: Props) {
   const [bookedSlots, setBookedSlots] = useState<string[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
-  const [form, setForm] = useState({ name: "", phone: "", email: "", agree: false });
+  const [form, setForm] = useState({ name: "", phone: "", cpf: "", email: "", agree: false });
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [loadingSlots, setLoadingSlots] = useState(false);
+  
+  /* pix / polling state */
+  const [pixData, setPixData] = useState<any>(null);
+  const [appointmentId, setAppointmentId] = useState<string | null>(null);
+
+  /* ── PIX Polling (Step 5) ── */
+  useEffect(() => {
+    let interval: ReturnType<typeof setInterval>;
+    if (step === 5 && appointmentId && !success) {
+      const startTime = Date.now();
+      interval = setInterval(async () => {
+        if (Date.now() - startTime > 15 * 60 * 1000) {
+          clearInterval(interval);
+          toast.error("Tempo expirado. Se já pagou, o médico receberá a confirmação em breve.");
+          return;
+        }
+        const { data } = await supabase
+          .from("appointments")
+          .select("payment_status")
+          .eq("id", appointmentId)
+          .maybeSingle();
+
+        if (data?.payment_status === "paid") {
+          clearInterval(interval);
+          setSuccess(true);
+        }
+      }, 5000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [step, appointmentId, success]);
 
   /* ── 30-minute session timeout ── */
   useEffect(() => {
@@ -108,9 +149,11 @@ export default function BookingModal({ open, onOpenChange, doctor }: Props) {
       setStep(1);
       setSelectedDate(null);
       setSelectedTime(null);
-      setForm({ name: "", phone: "", email: "", agree: false });
+      setForm({ name: "", phone: "", cpf: "", email: "", agree: false });
       setSubmitting(false);
       setSuccess(false);
+      setPixData(null);
+      setAppointmentId(null);
     }
   }, [open]);
 
@@ -150,7 +193,6 @@ export default function BookingModal({ open, onOpenChange, doctor }: Props) {
       const d = addDays(today, i);
       const dow = getDay(d);
       const dateStr = format(d, "yyyy-MM-dd");
-      // Past dates are always disabled (i=0 is today, never past)
       const enabled = activeDOWs.has(dow) && !fullBlockDates.has(dateStr);
       days.push({ date: d, enabled });
     }
@@ -168,7 +210,7 @@ export default function BookingModal({ open, onOpenChange, doctor }: Props) {
         .from("appointments")
         .select("scheduled_at")
         .eq("doctor_id", doctor.id)
-        .in("status", ["pending", "completed"])
+        .in("status", ["pending", "completed", "confirmed"])
         .gte("scheduled_at", dayStart)
         .lte("scheduled_at", dayEnd);
 
@@ -192,8 +234,6 @@ export default function BookingModal({ open, onOpenChange, doctor }: Props) {
     );
     const duration = doctor.consultation_duration || 30;
     const slots: string[] = [];
-
-    // Current time filter: if selected date is today, skip past slots
     const now = new Date();
     const isTodayDate = isToday(selectedDate);
 
@@ -204,20 +244,17 @@ export default function BookingModal({ open, onOpenChange, doctor }: Props) {
         const t = format(cur, "HH:mm");
         const tEnd = format(addMinutes(cur, duration), "HH:mm");
 
-        // Skip slots that are in the past for today
         if (isTodayDate && isBefore(cur, now)) {
           cur = addMinutes(cur, duration);
           continue;
         }
 
-        // check partial blocks
         const isBlocked = partialBlocks.some((b) => {
           const bs = b.start_time!.substring(0, 5);
           const be = b.end_time!.substring(0, 5);
           return t < be && bs < tEnd;
         });
 
-        // check booked
         const isBooked = bookedSlots.includes(t);
 
         if (!isBlocked && !isBooked) slots.push(t);
@@ -240,6 +277,11 @@ export default function BookingModal({ open, onOpenChange, doctor }: Props) {
       toast.error("Telefone inválido. Deve ter 10 ou 11 dígitos com DDD.");
       return false;
     }
+    const cpfClean = digitsOnly(form.cpf);
+    if (cpfClean.length !== 11) {
+      toast.error("CPF inválido. Deve ter exatos 11 dígitos.");
+      return false;
+    }
     if (form.email) {
       const email = sanitize(form.email);
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -254,30 +296,28 @@ export default function BookingModal({ open, onOpenChange, doctor }: Props) {
     return true;
   };
 
-  /* ── confirm ── */
+  /* ── confirm (EDGE FUNCTION CALL) ── */
   const handleConfirm = async () => {
     if (!selectedDate || !selectedTime || submitting) return;
     setSubmitting(true);
 
     try {
-      /* build scheduled_at ISO */
       const dateStr = format(selectedDate, "yyyy-MM-dd");
       const scheduledAt = `${dateStr}T${selectedTime}:00`;
 
-      /* Prevent past appointments – final check */
       if (isBefore(parseISO(scheduledAt), new Date())) {
         toast.error("Não é possível agendar em um horário que já passou.");
         setSubmitting(false);
         return;
       }
 
-      /* double-check availability (prevents race conditions) */
+      /* Check clash ahead of time for UX */
       const { data: clash } = await supabase
         .from("appointments")
         .select("id")
         .eq("doctor_id", doctor.id)
         .eq("scheduled_at", scheduledAt)
-        .in("status", ["pending", "completed"]);
+        .in("status", ["pending", "confirmed", "completed"]);
 
       if (clash && clash.length > 0) {
         toast.error("Este horário acabou de ser reservado. Por favor escolha outro.");
@@ -288,66 +328,38 @@ export default function BookingModal({ open, onOpenChange, doctor }: Props) {
         return;
       }
 
-      /* affiliate */
-      const refCode = getRefCode();
-      let affiliateId: string | null = null;
-      let commissionRate = 0;
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      const cpfClean = digitsOnly(form.cpf);
+      const refCode = getCookie("pontea_ref") || localStorage.getItem("pontea_ref") || null;
 
-      if (refCode) {
-        const { data: aff } = await supabase
-          .from("affiliates")
-          .select("id, commission_rate")
-          .eq("ref_code", refCode)
-          .eq("status", "approved")
-          .maybeSingle();
-        if (aff) {
-          affiliateId = aff.id;
-          commissionRate = aff.commission_rate ?? 0;
-        }
-      }
-
-      const priceCents = doctor.consultation_price || 0;
-      const platformFeeCents = Math.round(priceCents * 0.2);
-      const affiliateCommissionCents = affiliateId
-        ? Math.round(priceCents * commissionRate / 100)
-        : 0;
-
-      const { data: inserted, error } = await supabase
-        .from("appointments")
-        .insert({
+      const response = await fetch(`${supabaseUrl}/functions/v1/create-payment`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${supabaseAnonKey}`,
+        },
+        body: JSON.stringify({
           doctor_id: doctor.id,
-          affiliate_id: affiliateId,
           patient_name: sanitize(form.name),
           patient_phone: digitsOnly(form.phone),
           patient_email: form.email ? sanitize(form.email) : null,
-          scheduled_at: scheduledAt,
-          status: "pending",
-          price_cents: priceCents,
-          platform_fee_cents: platformFeeCents,
-          affiliate_commission_cents: affiliateCommissionCents,
+          patient_cpf: cpfClean,
+          scheduled_at: new Date(scheduledAt).toISOString(),
+          price_cents: doctor.consultation_price,
           ref_code: refCode,
-          payment_status: "pending",
-        })
-        .select("id")
-        .single();
+        }),
+      });
 
-      if (error) throw error;
-
-      /* update referral click */
-      if (affiliateId && inserted) {
-        await supabase
-          .from("referral_clicks")
-          .update({ converted: true, appointment_id: inserted.id })
-          .eq("affiliate_id", affiliateId)
-          .eq("doctor_id", doctor.id)
-          .eq("converted", false)
-          .order("created_at", { ascending: false })
-          .limit(1);
+      const data = await response.json();
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || "Erro ao processar pagamento via PIX.");
       }
 
-      // Clear timeout on success
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      setSuccess(true);
+      setPixData(data);
+      setAppointmentId(data.appointment_id);
+      setStep(5);
+      
     } catch (err: any) {
       console.error(err);
       toast.error(err.message || "Erro ao agendar. Tente novamente.");
@@ -369,17 +381,17 @@ export default function BookingModal({ open, onOpenChange, doctor }: Props) {
     const cleanPhone = digitsOnly(doctor.phone);
     if (!cleanPhone) return null;
     const dataFormatada = format(selectedDate, "dd/MM/yyyy");
-    const msg = `Olá Dr(a). ${doctor.full_name}! Acabei de agendar uma consulta pela Pontea para ${dataFormatada} às ${selectedTime}. Meu nome é ${sanitize(form.name)}. Aguardo confirmação!`;
+    const msg = `Olá Dr(a). ${doctor.full_name}! Acabei de confirmar uma consulta pela Pontea para ${dataFormatada} às ${selectedTime}. Meu nome é ${sanitize(form.name)}. Aguardo você!`;
     return `https://wa.me/55${cleanPhone}?text=${encodeURIComponent(msg)}`;
   };
 
   /* ── step indicator ── */
   const StepIndicator = () => (
     <div className="flex items-center justify-center gap-0 mb-6">
-      {[1, 2, 3, 4].map((s, i) => (
+      {[1, 2, 3, 4, 5].map((s, i) => (
         <div key={s} className="flex items-center">
           <div
-            className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-semibold transition-colors ${
+            className={`h-7 w-7 rounded-full flex items-center justify-center text-xs font-semibold transition-colors ${
               success
                 ? "bg-teal-100 text-teal-700"
                 : s === step
@@ -389,11 +401,11 @@ export default function BookingModal({ open, onOpenChange, doctor }: Props) {
                 : "bg-slate-100 text-slate-400"
             }`}
           >
-            {success || s < step ? <CheckCircle className="h-4 w-4" /> : s}
+            {success || s < step ? <CheckCircle className="h-3.5 w-3.5" /> : s}
           </div>
-          {i < 3 && (
+          {i < 4 && (
             <div
-              className={`w-8 h-0.5 ${
+              className={`w-3 sm:w-6 h-0.5 ${
                 s < step || success ? "bg-teal-300" : "bg-slate-200"
               }`}
             />
@@ -485,54 +497,18 @@ export default function BookingModal({ open, onOpenChange, doctor }: Props) {
 
           {/* ═══ SUCCESS SCREEN ═══ */}
           {success && (
-            <div className="text-center py-4 animate-in fade-in-0 zoom-in-95">
-              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-teal-50">
-                <CheckCircle className="h-9 w-9 text-teal-600" />
+            <div className="text-center py-6 animate-in fade-in-0 zoom-in-95">
+              <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100 border-4 border-emerald-50">
+                <CheckCircle className="h-10 w-10 text-emerald-500" />
               </div>
-              <h3 className="text-xl font-bold text-slate-800 mb-2">
-                Consulta agendada com sucesso!
+              <h3 className="text-2xl font-bold text-slate-800 mb-2">
+                Pagamento confirmado!
               </h3>
-              <p className="text-sm text-slate-500 mb-6 max-w-xs mx-auto">
-                O médico receberá sua solicitação e você será notificado da
-                confirmação. Guarde essas informações.
+              <p className="text-[15px] text-slate-500 mb-6 max-w-sm mx-auto leading-relaxed">
+                Sua consulta com <strong className="text-slate-700">Dr(a). {doctor.full_name}</strong> está confirmada 
+                para {selectedDate && <strong className="text-slate-700">{format(selectedDate, "dd/MM/yyyy")}</strong>} 
+                às <strong className="text-slate-700">{selectedTime}</strong>. Você receberá uma confirmação por celular/e-mail.
               </p>
-
-              <div className="bg-slate-50 rounded-xl p-4 text-left text-sm space-y-2 mb-6 border border-slate-100">
-                <p>
-                  <span className="text-slate-400">Médico:</span>{" "}
-                  <span className="font-medium text-slate-700">
-                    {doctor.full_name}
-                  </span>
-                </p>
-                <p>
-                  <span className="text-slate-400">Especialidade:</span>{" "}
-                  <span className="font-medium text-slate-700">
-                    {doctor.specialty}
-                  </span>
-                </p>
-                {selectedDate && (
-                  <p>
-                    <span className="text-slate-400">Data:</span>{" "}
-                    <span className="font-medium text-slate-700">
-                      {format(selectedDate, "EEEE, dd 'de' MMMM 'de' yyyy", {
-                        locale: ptBR,
-                      })}
-                    </span>
-                  </p>
-                )}
-                <p>
-                  <span className="text-slate-400">Horário:</span>{" "}
-                  <span className="font-medium text-slate-700">
-                    {selectedTime}
-                  </span>
-                </p>
-                <p>
-                  <span className="text-slate-400">Valor:</span>{" "}
-                  <span className="font-medium text-slate-700">
-                    {priceFormatted}
-                  </span>
-                </p>
-              </div>
 
               <div className="flex flex-col gap-3">
                 {buildWhatsAppLink() && (
@@ -551,7 +527,7 @@ export default function BookingModal({ open, onOpenChange, doctor }: Props) {
                     onOpenChange(false);
                     navigate("/buscar");
                   }}
-                  className="bg-teal-600 hover:bg-teal-700 text-white rounded-xl px-8"
+                  className="bg-teal-600 hover:bg-teal-700 text-white rounded-xl px-8 py-3"
                 >
                   Voltar ao Marketplace
                 </Button>
@@ -714,6 +690,26 @@ export default function BookingModal({ open, onOpenChange, doctor }: Props) {
 
                 <div>
                   <label className="text-sm font-medium text-slate-700 block mb-1.5">
+                    CPF (necessário para pagamento) *
+                  </label>
+                  <input
+                    type="text"
+                    value={form.cpf}
+                    onChange={(e) =>
+                      setForm((p) => ({
+                        ...p,
+                        cpf: applyCpfMask(e.target.value),
+                      }))
+                    }
+                    placeholder="000.000.000-00"
+                    maxLength={14}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm
+                               focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition-shadow"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium text-slate-700 block mb-1.5">
                     E-mail{" "}
                     <span className="text-slate-400 font-normal">
                       (opcional)
@@ -767,23 +763,24 @@ export default function BookingModal({ open, onOpenChange, doctor }: Props) {
             </div>
           )}
 
-          {/* ═══ STEP 4: CONFIRMATION ═══ */}
+          {/* ═══ STEP 4: PAGAMENTO ═══ */}
           {!success && step === 4 && (
             <div className="animate-in fade-in-0 slide-in-from-right-4">
               <button
                 onClick={() => setStep(3)}
                 className="flex items-center text-sm text-slate-500 hover:text-teal-600 mb-3 transition-colors"
+                disabled={submitting}
               >
                 <ChevronLeft className="h-4 w-4 mr-1" /> Voltar
               </button>
               <h3 className="text-lg font-bold text-slate-800 mb-1">
-                Confirme os dados
+                Pagamento
               </h3>
               <p className="text-sm text-slate-500 mb-5">
-                Revise o resumo antes de confirmar.
+                Revise o resumo antes de ser direcionado para o PIX.
               </p>
 
-              <div className="bg-slate-50 rounded-xl border border-slate-100 p-5 space-y-3 text-sm">
+              <div className="bg-slate-50 rounded-xl border border-slate-100 p-5 space-y-3 text-sm mb-6">
                 <div className="flex justify-between">
                   <span className="text-slate-400">Médico</span>
                   <span className="font-medium text-slate-700">
@@ -828,6 +825,12 @@ export default function BookingModal({ open, onOpenChange, doctor }: Props) {
                   </span>
                 </div>
                 <div className="flex justify-between">
+                  <span className="text-slate-400">CPF</span>
+                  <span className="font-medium text-slate-700">
+                    {form.cpf}
+                  </span>
+                </div>
+                <div className="flex justify-between">
                   <span className="text-slate-400">Telefone</span>
                   <span className="font-medium text-slate-700">
                     {form.phone}
@@ -843,24 +846,93 @@ export default function BookingModal({ open, onOpenChange, doctor }: Props) {
                 )}
               </div>
 
-              <div className="mt-6">
+              <Button
+                onClick={handleConfirm}
+                disabled={submitting}
+                className="w-full bg-teal-600 hover:bg-teal-700 text-white rounded-xl py-6 text-base font-semibold transition-all"
+              >
+                {submitting ? (
+                  <>
+                    <Loader2 className="h-5 w-5 mr-3 animate-spin" />
+                    Gerando PIX...
+                  </>
+                ) : (
+                  "Pagar com PIX"
+                )}
+              </Button>
+            </div>
+          )}
+
+          {/* ═══ STEP 5: QR CODE PIX ═══ */}
+          {!success && step === 5 && pixData && (
+            <div className="animate-in fade-in-0 zoom-in-95 text-center">
+              <h3 className="text-xl font-bold text-slate-800 mb-2">
+                Pague via PIX para confirmar sua consulta
+              </h3>
+              <p className="text-sm text-slate-600 mb-6">
+                Abra o app do seu banco, escolha <strong>pagar com PIX</strong> e escaneie o QR Code ou cole o código abaixo.
+              </p>
+              
+              <div className="bg-white p-4 rounded-xl shadow-md inline-block mx-auto mb-6 border border-slate-100">
+                <img 
+                  src={`data:image/png;base64,${pixData.pix_qr_code}`} 
+                  alt="QR Code PIX" 
+                  className="w-56 h-56 mx-auto object-cover" 
+                />
+              </div>
+              
+              <div className="mb-6 mx-auto max-w-sm text-left">
+                <div className="flex bg-slate-50 rounded-lg border border-slate-200 p-1 mb-2 items-center">
+                  <input 
+                    readOnly 
+                    value={pixData.pix_payload} 
+                    className="bg-transparent text-xs font-mono w-full px-3 py-2 text-slate-600 outline-none flex-1 truncate" 
+                  />
+                  <Button 
+                    variant="secondary" 
+                    size="sm" 
+                    onClick={() => {
+                      navigator.clipboard.writeText(pixData.pix_payload);
+                      toast.success("Código copiado para a área de transferência!");
+                    }}
+                    className="flex-shrink-0 text-teal-700 bg-teal-100 hover:bg-teal-200 py-4"
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+
+                <div className="flex flex-col gap-1 text-sm bg-slate-50 p-3 rounded-lg border border-slate-100 mt-3">
+                  <div className="flex justify-between">
+                    <span className="text-slate-500 font-medium">Este código expira em:</span>
+                    <span className="text-slate-700 font-semibold">{format(new Date(pixData.pix_expiration), "dd/MM 'às' HH:mm")}</span>
+                  </div>
+                  <div className="flex justify-between items-center mt-1 pt-2 border-t border-slate-200">
+                    <span className="text-slate-500 font-medium">Valor total:</span>
+                    <strong className="text-teal-700 text-lg">R$ {Number(pixData.value).toFixed(2).replace('.', ',')}</strong>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex justify-center items-center gap-2 mb-8 bg-blue-50 text-blue-700 p-4 rounded-xl shadow-sm border border-blue-100 max-w-sm mx-auto">
+                <div className="relative flex h-3 w-3 mr-1">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-blue-500"></span>
+                </div>
+                <span className="text-sm font-semibold">Aguardando confirmação do pagamento...</span>
+              </div>
+
+              <div className="flex justify-center gap-3">
                 <Button
-                  onClick={handleConfirm}
-                  disabled={submitting}
-                  className="w-full bg-teal-600 hover:bg-teal-700 text-white rounded-xl py-3 text-sm font-semibold"
+                  onClick={() => onOpenChange(false)}
+                  variant="outline"
+                  className="rounded-xl px-10 text-slate-600"
                 >
-                  {submitting ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Agendando…
-                    </>
-                  ) : (
-                    "Confirmar Agendamento"
-                  )}
+                  Fechar
                 </Button>
               </div>
             </div>
           )}
+
         </div>
       </DialogContent>
     </Dialog>
