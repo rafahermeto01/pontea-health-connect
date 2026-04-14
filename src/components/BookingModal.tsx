@@ -16,6 +16,9 @@ import {
   Clock,
   MessageCircle,
   Copy,
+  CreditCard,
+  QrCode,
+  Lock,
 } from "lucide-react";
 import {
   format,
@@ -102,6 +105,13 @@ export default function BookingModal({ open, onOpenChange, doctor }: Props) {
   const [pixData, setPixData] = useState<any>(null);
   const [appointmentId, setAppointmentId] = useState<string | null>(null);
 
+  /* payment method state */
+  const [paymentMethod, setPaymentMethod] = useState<"PIX" | "CREDIT_CARD">("PIX");
+  const [cardForm, setCardForm] = useState({
+    holderName: "", number: "", expiryMonth: "", expiryYear: "", ccv: "",
+    postalCode: "", addressNumber: "",
+  });
+
   /* ── PIX Polling (Step 5) ── */
   useEffect(() => {
     let interval: ReturnType<typeof setInterval>;
@@ -154,6 +164,8 @@ export default function BookingModal({ open, onOpenChange, doctor }: Props) {
       setSuccess(false);
       setPixData(null);
       setAppointmentId(null);
+      setPaymentMethod("PIX");
+      setCardForm({ holderName: "", number: "", expiryMonth: "", expiryYear: "", ccv: "", postalCode: "", addressNumber: "" });
     }
   }, [open]);
 
@@ -296,8 +308,20 @@ export default function BookingModal({ open, onOpenChange, doctor }: Props) {
     return true;
   };
 
+  /* ── card mask helpers ── */
+  const formatCardNumber = (raw: string) => {
+    const d = raw.replace(/\D/g, "").slice(0, 16);
+    return d.replace(/(\d{4})(?=\d)/g, "$1 ").trim();
+  };
+  const formatCep = (raw: string) => {
+    const d = raw.replace(/\D/g, "").slice(0, 8);
+    if (d.length <= 5) return d;
+    return `${d.slice(0, 5)}-${d.slice(5)}`;
+  };
+  const currentYear = new Date().getFullYear();
+
   /* ── confirm (EDGE FUNCTION CALL) ── */
-  const handleConfirm = async () => {
+  const handleConfirm = async (method: "PIX" | "CREDIT_CARD" = "PIX") => {
     if (!selectedDate || !selectedTime || submitting) return;
     setSubmitting(true);
 
@@ -334,32 +358,68 @@ export default function BookingModal({ open, onOpenChange, doctor }: Props) {
       const cpfClean = digitsOnly(form.cpf);
       const refCode = getCookie("pontea_ref") || localStorage.getItem("pontea_ref") || null;
 
+      let bodyPayload: any = {
+        doctor_id: doctor.id,
+        patient_name: sanitize(form.name),
+        patient_phone: digitsOnly(form.phone),
+        patient_email: form.email ? sanitize(form.email) : null,
+        patient_cpf: cpfClean,
+        scheduled_at: scheduledAt,
+        price_cents: doctor.consultation_price,
+        ref_code: refCode,
+        payment_method: method,
+      };
+
+      if (method === "CREDIT_CARD") {
+        const ipRes = await fetch("https://api.ipify.org?format=json");
+        const ipData = await ipRes.json();
+        bodyPayload = {
+          ...bodyPayload,
+          credit_card: {
+            holderName: cardForm.holderName,
+            number: cardForm.number.replace(/\s/g, ""),
+            expiryMonth: cardForm.expiryMonth,
+            expiryYear: cardForm.expiryYear,
+            ccv: cardForm.ccv,
+          },
+          credit_card_holder: {
+            name: cardForm.holderName,
+            email: form.email ? sanitize(form.email) : undefined,
+            postalCode: cardForm.postalCode,
+            addressNumber: cardForm.addressNumber,
+          },
+          remote_ip: ipData.ip,
+        };
+      }
+
       const response = await fetch(`${supabaseUrl}/functions/v1/create-payment`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${supabaseAnonKey}`,
         },
-        body: JSON.stringify({
-          doctor_id: doctor.id,
-          patient_name: sanitize(form.name),
-          patient_phone: digitsOnly(form.phone),
-          patient_email: form.email ? sanitize(form.email) : null,
-          patient_cpf: cpfClean,
-          scheduled_at: scheduledAt,
-          price_cents: doctor.consultation_price,
-          ref_code: refCode,
-        }),
+        body: JSON.stringify(bodyPayload),
       });
 
       const data = await response.json();
       if (!response.ok || !data.success) {
-        throw new Error(data.error || "Erro ao processar pagamento via PIX.");
+        throw new Error(data.error || "Erro ao processar pagamento.");
       }
 
-      setPixData(data);
-      setAppointmentId(data.appointment_id);
-      setStep(5);
+      /* Clear card data from memory immediately */
+      setCardForm({ holderName: "", number: "", expiryMonth: "", expiryYear: "", ccv: "", postalCode: "", addressNumber: "" });
+
+      if (data.payment_status === "paid") {
+        /* Card approved instantly */
+        setAppointmentId(data.appointment_id);
+        setSuccess(true);
+        setStep(5);
+      } else {
+        /* PIX flow */
+        setPixData(data);
+        setAppointmentId(data.appointment_id);
+        setStep(5);
+      }
       
     } catch (err: any) {
       console.error(err);
@@ -777,11 +837,37 @@ export default function BookingModal({ open, onOpenChange, doctor }: Props) {
               <h3 className="text-lg font-bold text-slate-800 mb-1">
                 Pagamento
               </h3>
-              <p className="text-sm text-slate-500 mb-5">
-                Revise o resumo antes de ser direcionado para o PIX.
+              <p className="text-sm text-slate-500 mb-4">
+                Escolha a forma de pagamento e revise o resumo.
               </p>
 
-              <div className="bg-slate-50 rounded-xl border border-slate-100 p-5 space-y-3 text-sm mb-6">
+              {/* Payment method selector */}
+              <div className="grid grid-cols-2 gap-3 mb-5">
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod("PIX")}
+                  className={`flex items-center justify-center gap-2 py-3 rounded-xl border text-sm font-medium transition-all ${
+                    paymentMethod === "PIX"
+                      ? "bg-teal-600 text-white border-teal-600 shadow-md"
+                      : "bg-white text-slate-600 border-slate-200 hover:border-teal-300"
+                  }`}
+                >
+                  <QrCode className="h-4 w-4" /> PIX
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod("CREDIT_CARD")}
+                  className={`flex items-center justify-center gap-2 py-3 rounded-xl border text-sm font-medium transition-all ${
+                    paymentMethod === "CREDIT_CARD"
+                      ? "bg-teal-600 text-white border-teal-600 shadow-md"
+                      : "bg-white text-slate-600 border-slate-200 hover:border-teal-300"
+                  }`}
+                >
+                  <CreditCard className="h-4 w-4" /> Cartão de Crédito
+                </button>
+              </div>
+
+              <div className="bg-slate-50 rounded-xl border border-slate-100 p-5 space-y-3 text-sm mb-5">
                 <div className="flex justify-between">
                   <span className="text-slate-400">Médico</span>
                   <span className="font-medium text-slate-700">
@@ -847,20 +933,157 @@ export default function BookingModal({ open, onOpenChange, doctor }: Props) {
                 )}
               </div>
 
-              <Button
-                onClick={handleConfirm}
-                disabled={submitting}
-                className="w-full bg-teal-600 hover:bg-teal-700 text-white rounded-xl py-6 text-base font-semibold transition-all"
-              >
-                {submitting ? (
-                  <>
-                    <Loader2 className="h-5 w-5 mr-3 animate-spin" />
-                    Gerando PIX...
-                  </>
-                ) : (
-                  "Pagar com PIX"
-                )}
-              </Button>
+              {/* ── Credit Card form ── */}
+              {paymentMethod === "CREDIT_CARD" && (
+                <div className="bg-white rounded-xl border border-slate-200 p-5 mb-5 animate-in fade-in-0 slide-in-from-bottom-2 duration-200">
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-sm font-semibold text-slate-700">Dados do Cartão</span>
+                    <div className="flex items-center gap-1.5 text-[10px] text-slate-400 font-medium">
+                      <span className="bg-slate-100 px-1.5 py-0.5 rounded font-bold text-slate-500">VISA</span>
+                      <span className="bg-slate-100 px-1.5 py-0.5 rounded font-bold text-slate-500">MC</span>
+                      <span className="bg-slate-100 px-1.5 py-0.5 rounded font-bold text-slate-500">ELO</span>
+                    </div>
+                  </div>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="text-xs font-medium text-slate-600 block mb-1">Nome no cartão *</label>
+                      <input
+                        type="text"
+                        autoComplete="cc-name"
+                        value={cardForm.holderName}
+                        onChange={(e) => setCardForm(p => ({ ...p, holderName: e.target.value }))}
+                        placeholder="NOME COMO ESTÁ NO CARTÃO"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none uppercase"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-slate-600 block mb-1">Número do cartão *</label>
+                      <input
+                        type="text"
+                        autoComplete="cc-number"
+                        inputMode="numeric"
+                        value={cardForm.number}
+                        onChange={(e) => setCardForm(p => ({ ...p, number: formatCardNumber(e.target.value) }))}
+                        placeholder="0000 0000 0000 0000"
+                        maxLength={19}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none font-mono"
+                      />
+                    </div>
+                    <div className="grid grid-cols-3 gap-3">
+                      <div>
+                        <label className="text-xs font-medium text-slate-600 block mb-1">Mês *</label>
+                        <select
+                          autoComplete="cc-exp-month"
+                          value={cardForm.expiryMonth}
+                          onChange={(e) => setCardForm(p => ({ ...p, expiryMonth: e.target.value }))}
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+                        >
+                          <option value="">Mês</option>
+                          {Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, "0")).map(m => (
+                            <option key={m} value={m}>{m}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-xs font-medium text-slate-600 block mb-1">Ano *</label>
+                        <select
+                          autoComplete="cc-exp-year"
+                          value={cardForm.expiryYear}
+                          onChange={(e) => setCardForm(p => ({ ...p, expiryYear: e.target.value }))}
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+                        >
+                          <option value="">Ano</option>
+                          {Array.from({ length: 11 }, (_, i) => String(currentYear + i)).map(y => (
+                            <option key={y} value={y}>{y}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-xs font-medium text-slate-600 block mb-1">CVV *</label>
+                        <input
+                          type="text"
+                          autoComplete="cc-csc"
+                          inputMode="numeric"
+                          value={cardForm.ccv}
+                          onChange={(e) => setCardForm(p => ({ ...p, ccv: e.target.value.replace(/\D/g, "").slice(0, 4) }))}
+                          placeholder="123"
+                          maxLength={4}
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none font-mono"
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-xs font-medium text-slate-600 block mb-1">CEP *</label>
+                        <input
+                          type="text"
+                          autoComplete="postal-code"
+                          inputMode="numeric"
+                          value={cardForm.postalCode}
+                          onChange={(e) => setCardForm(p => ({ ...p, postalCode: formatCep(e.target.value) }))}
+                          placeholder="00000-000"
+                          maxLength={9}
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-medium text-slate-600 block mb-1">Nº endereço *</label>
+                        <input
+                          type="text"
+                          value={cardForm.addressNumber}
+                          onChange={(e) => setCardForm(p => ({ ...p, addressNumber: e.target.value }))}
+                          placeholder="123"
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {paymentMethod === "PIX" ? (
+                <Button
+                  onClick={() => handleConfirm("PIX")}
+                  disabled={submitting}
+                  className="w-full bg-teal-600 hover:bg-teal-700 text-white rounded-xl py-6 text-base font-semibold transition-all"
+                >
+                  {submitting ? (
+                    <>
+                      <Loader2 className="h-5 w-5 mr-3 animate-spin" />
+                      Gerando PIX...
+                    </>
+                  ) : (
+                    <><QrCode className="h-5 w-5 mr-2" /> Pagar com PIX</>
+                  )}
+                </Button>
+              ) : (
+                <>
+                  <Button
+                    onClick={() => {
+                      if (!cardForm.holderName || !cardForm.number || !cardForm.expiryMonth || !cardForm.expiryYear || !cardForm.ccv || !cardForm.postalCode || !cardForm.addressNumber) {
+                        toast.error("Preencha todos os dados do cartão.");
+                        return;
+                      }
+                      handleConfirm("CREDIT_CARD");
+                    }}
+                    disabled={submitting}
+                    className="w-full bg-teal-600 hover:bg-teal-700 text-white rounded-xl py-6 text-base font-semibold transition-all"
+                  >
+                    {submitting ? (
+                      <>
+                        <Loader2 className="h-5 w-5 mr-3 animate-spin" />
+                        Processando pagamento...
+                      </>
+                    ) : (
+                      <>Pagar {priceFormatted}</>
+                    )}
+                  </Button>
+                  <div className="flex items-center justify-center gap-1.5 mt-3 text-xs text-slate-400">
+                    <Lock className="h-3 w-3" />
+                    <span>Pagamento seguro — dados processados pela Asaas</span>
+                  </div>
+                </>
+              )}
             </div>
           )}
 

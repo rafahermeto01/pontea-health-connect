@@ -18,18 +18,18 @@ const faqs = [
   },
   { 
     q: "Quanto custa anunciar meu consultório na Pontea?", 
-    a: "Oferecemos planos a partir de R$ 149/mês para o perfil básico e R$ 399/mês para o plano Pro com destaque na busca e agendamentos ilimitados." 
+    a: "Oferecemos planos a partir de R$ 79,90/mês para o perfil Básico e R$ 179,90/mês para o plano Premium com destaque na busca e consultas ilimitadas." 
   }
 ];
 
 const plans = [
   {
-    name: "Básico", price: "R$ 149", period: "/mês",
-    features: ["Perfil no marketplace", "Até 30 agendamentos/mês", "Link personalizado", "Suporte por email"],
+    name: "Básico", price: "R$ 79,90", period: "/mês",
+    features: ["Perfil no marketplace", "Receber agendamentos de pacientes", "Painel de agendamentos", "Até 50 consultas/mês"],
   },
   {
-    name: "Pro", price: "R$ 399", period: "/mês", featured: true,
-    features: ["Tudo do Básico", "Agendamentos ilimitados", "Destaque na busca", "Analytics avançado", "Suporte prioritário", "Badge 'Recomendado'"],
+    name: "Premium", price: "R$ 179,90", period: "/mês", featured: true,
+    features: ["Tudo do Básico", "Consultas ilimitadas", "Destaque no marketplace (aparece primeiro)", "Relatórios financeiros avançados", "Suporte prioritário", "Badge 'Recomendado'"],
   },
 ];
 
@@ -50,7 +50,10 @@ export default function ForDoctorsPage() {
         <h1 className="text-3xl font-extrabold text-foreground sm:text-4xl text-slate-900 font-heading">
           Receba novos pacientes <span className="text-primary block mt-2">todos os meses</span>
         </h1>
-        <p className="mt-4 text-lg text-slate-500">
+        <p className="mt-4 text-lg text-slate-500 font-medium">
+          Crie sua conta gratuitamente e escolha um plano para começar a receber pacientes.
+        </p>
+        <p className="mt-2 text-lg text-slate-500">
           A Pontea Saúde é uma plataforma de marketing médico que conecta especialistas verificados a pacientes qualificados, permitindo que você aumente sua base de pacientes particulares sem investir em anúncios complexos.
         </p>
       </div>

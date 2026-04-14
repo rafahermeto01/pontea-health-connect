@@ -4,12 +4,14 @@ import { supabase } from "@/integrations/supabase/client";
 import DoctorSidebar from "./DoctorSidebar";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Loader2 } from "lucide-react";
+import DoctorPlanSelection from "./DoctorPlanSelection";
 
 export default function DoctorDashboardLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const [doctor, setDoctor] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [forceShowPlans, setForceShowPlans] = useState(false);
 
   // Generate a simple breadcrumb from pathname
   const pathParts = location.pathname.split('/').filter(Boolean);
@@ -57,10 +59,23 @@ export default function DoctorDashboardLayout() {
     );
   }
 
+  const isPlanActive = doctor.plan_status === "active";
+  const showPlanScreen = !isPlanActive || forceShowPlans;
+
+  // Calculate days until expiration
+  let daysToExpiration = -1;
+  if (doctor.plan_expires_at) {
+    const expiresAt = new Date(doctor.plan_expires_at);
+    const today = new Date();
+    const diffTime = Math.abs(expiresAt.getTime() - today.getTime());
+    daysToExpiration = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  }
+  const showRenewBanner = isPlanActive && !forceShowPlans && daysToExpiration > 0 && daysToExpiration <= 7;
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-[#F8FAFB]">
-        <DoctorSidebar doctorName={doctor.full_name} />
+        <DoctorSidebar doctorName={doctor.full_name} planType={doctor.plan_type} />
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
           <header className="h-16 flex items-center justify-between border-b border-slate-100 bg-white px-6 shadow-sm z-10 shrink-0">
             <div className="flex items-center gap-4">
@@ -78,10 +93,39 @@ export default function DoctorDashboardLayout() {
                <span className="text-sm font-medium text-slate-700">{doctor.full_name?.split(' ')[0]}</span>
             </div>
           </header>
-          <main className="flex-1 overflow-auto">
-            <div className="max-w-7xl mx-auto p-4 md:p-8">
-              <Outlet context={{ doctor }} />
+          
+          {showRenewBanner && (
+            <div className="bg-amber-500 text-white px-6 py-2 flex items-center justify-between text-sm shadow-inner shrink-0">
+              <div className="flex items-center gap-2">
+                <span className="font-medium">⚠️ Seu plano vence em {daysToExpiration} {daysToExpiration === 1 ? 'dia' : 'dias'}.</span>
+                <span>Renove agora para não perder acesso à plataforma.</span>
+              </div>
+              <button 
+                onClick={() => setForceShowPlans(true)}
+                className="bg-white/20 hover:bg-white/30 text-white px-3 py-1 rounded-md text-xs font-semibold transition-colors uppercase tracking-wider"
+              >
+                Renovar
+              </button>
             </div>
+          )}
+
+          <main className="flex-1 overflow-auto">
+            {showPlanScreen ? (
+              <div className="max-w-7xl mx-auto p-4 md:p-8">
+                {forceShowPlans && isPlanActive && (
+                  <div className="mb-4 text-center">
+                    <button onClick={() => setForceShowPlans(false)} className="text-sm text-slate-500 hover:text-slate-800 underline">
+                      Voltar ao Painel
+                    </button>
+                  </div>
+                )}
+                <DoctorPlanSelection />
+              </div>
+            ) : (
+              <div className="max-w-7xl mx-auto p-4 md:p-8">
+                <Outlet context={{ doctor }} />
+              </div>
+            )}
           </main>
         </div>
       </div>

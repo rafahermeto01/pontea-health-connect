@@ -1,4 +1,4 @@
-import { BarChart3, Calendar, User, DollarSign, Star, LogOut, Clock } from "lucide-react";
+import { BarChart3, Calendar, User, DollarSign, Star, LogOut, Clock, Crown } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,7 +25,7 @@ const items = [
   { title: "Avaliações", url: "/dashboard/medico/avaliacoes", icon: Star },
 ];
 
-export default function DoctorSidebar({ doctorName }: { doctorName: string | null }) {
+export default function DoctorSidebar({ doctorName, planType }: { doctorName: string | null, planType?: string | null }) {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
@@ -85,7 +85,19 @@ export default function DoctorSidebar({ doctorName }: { doctorName: string | nul
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-slate-700 truncate">{doctorName ?? "—"}</p>
-                <p className="text-xs text-slate-400">Médico</p>
+                <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
+                  <p className="text-xs text-slate-400">Médico</p>
+                  {planType === "basic" && (
+                    <span className="inline-flex items-center rounded bg-slate-100 px-1.5 py-[1px] text-[10px] font-medium text-slate-600 truncate">
+                      Plano Básico
+                    </span>
+                  )}
+                  {planType === "premium" && (
+                    <span className="inline-flex items-center gap-0.5 rounded bg-amber-100 px-1.5 py-[1px] text-[10px] font-medium text-amber-700 truncate">
+                      <Crown className="h-2.5 w-2.5 shrink-0" /> Premium
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
             <button onClick={handleLogout} className="text-slate-400 hover:text-red-500 transition-colors p-1" title="Sair">

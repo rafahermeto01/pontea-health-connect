@@ -12,7 +12,17 @@ serve(async (req) => {
     const payment = body.payment
     if (!payment || !payment.id) return new Response("OK", { status: 200 })
     const { data: appointment } = await supabase.from("appointments").select("id, affiliate_id, affiliate_commission_cents, status").eq("asaas_payment_id", payment.id).maybeSingle()
-    if (!appointment) return new Response("OK", { status: 200 })
+    if (!appointment) {
+      const { data: doctor } = await supabase.from("doctors").select("id").eq("plan_payment_id", payment.id).maybeSingle()
+      if (doctor) {
+        if (event === "PAYMENT_CONFIRMED" || event === "PAYMENT_RECEIVED") {
+          await supabase.from("doctors").update({ plan_status: "active", plan_started_at: new Date().toISOString(), plan_expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() }).eq("id", doctor.id)
+        } else if (event === "PAYMENT_OVERDUE" || event === "PAYMENT_DELETED" || event === "PAYMENT_REFUNDED") {
+          await supabase.from("doctors").update({ plan_status: "expired" }).eq("id", doctor.id)
+        }
+      }
+      return new Response("OK", { status: 200 })
+    }
     if (event === "PAYMENT_CONFIRMED" || event === "PAYMENT_RECEIVED") {
       await supabase.from("appointments").update({ payment_status: "paid", status: "confirmed" }).eq("id", appointment.id)
       // Credit affiliate commission automatically
