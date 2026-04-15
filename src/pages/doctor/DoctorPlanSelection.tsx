@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
-import { CheckCircle, Crown, Copy, Loader2, QrCode, CreditCard, Lock } from "lucide-react";
+import { CheckCircle, Crown, Copy, Loader2, QrCode, CreditCard, Lock, Gift, MessageCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/sonner";
+import { SUPPORT_PHONE_DISPLAY, SUPPORT_WHATSAPP_FREE_TRIAL_URL } from "@/config/support";
 
 const digitsOnly = (s: string) => s.replace(/\D/g, "");
 
@@ -422,6 +423,29 @@ export default function DoctorPlanSelection() {
     <div className="max-w-5xl mx-auto py-8 text-center animate-in fade-in duration-500">
       <h1 className="text-3xl font-bold text-slate-900">Escolha seu plano para começar</h1>
       <p className="mt-3 text-slate-500">Após o pagamento, todas as funcionalidades serão liberadas.</p>
+
+      {/* Free Trial Banner */}
+      <div className="max-w-3xl mx-auto mt-8 bg-teal-50 border border-teal-200 rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-6 text-left">
+        <div className="flex items-start gap-4">
+          <div className="bg-teal-100 p-3 rounded-full shrink-0">
+            <Gift className="h-6 w-6 text-teal-600" />
+          </div>
+          <div>
+            <h3 className="font-heading font-semibold text-lg text-slate-900">Quer testar grátis por 30 dias?</h3>
+            <p className="text-slate-600 mt-1">Entre em contato com nosso suporte e libere seu acesso gratuito por 30 dias. Sem compromisso.</p>
+          </div>
+        </div>
+        <div className="shrink-0 flex flex-col items-center w-full md:w-auto">
+          <Button 
+            onClick={() => window.open(SUPPORT_WHATSAPP_FREE_TRIAL_URL, '_blank')}
+            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-sm px-6 h-12 text-sm"
+          >
+            <MessageCircle className="h-4 w-4 mr-2" />
+            Chamar no WhatsApp
+          </Button>
+          <p className="text-xs text-slate-400 mt-2">Suporte: {SUPPORT_PHONE_DISPLAY}</p>
+        </div>
+      </div>
 
       <div className="mt-12 grid md:grid-cols-2 gap-8 items-stretch max-w-4xl mx-auto">
         {/* Basic Plan */}

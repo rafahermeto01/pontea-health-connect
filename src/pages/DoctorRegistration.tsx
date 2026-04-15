@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { specialties } from "@/data/mockDoctors";
+import { SUPPORT_PHONE_DISPLAY, SUPPORT_WHATSAPP_URL } from "@/config/support";
 
 const ufs = ["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"];
 
@@ -57,6 +58,14 @@ export default function DoctorRegistration() {
       if (docError) throw docError;
 
       toast.success("Cadastro realizado com sucesso!");
+      toast("Bem-vindo à Pontea! 🎉", {
+        description: `Caso queira testar por 30 dias grátis, nos chame no suporte: ${SUPPORT_PHONE_DISPLAY}`,
+        duration: 10000,
+        action: {
+          label: "Chamar no WhatsApp",
+          onClick: () => window.open(SUPPORT_WHATSAPP_URL, "_blank"),
+        },
+      });
       navigate("/dashboard/medico");
     } catch (err: any) {
       toast.error(err.message || "Erro no cadastro");

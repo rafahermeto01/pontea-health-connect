@@ -1,4 +1,6 @@
 import { Link } from "react-router-dom";
+import { Phone, MessageCircle } from "lucide-react";
+import { SUPPORT_PHONE_DISPLAY, SUPPORT_WHATSAPP_URL } from "@/config/support";
 
 export default function Footer() {
   return (
@@ -35,7 +37,17 @@ export default function Footer() {
             <h4 className="mb-6 font-heading font-semibold text-white">Contato</h4>
             <div className="flex flex-col gap-3 text-sm text-slate-400">
               <p>suporte@ponteasaude.com.br</p>
-              <p>Segunda a Sexta, 09h às 18h</p>
+              <div className="flex flex-col gap-2 mt-1">
+                <a href={SUPPORT_WHATSAPP_URL} target="_blank" rel="noreferrer" className="flex items-center gap-2 transition-colors hover:text-primary">
+                  <Phone className="h-4 w-4" />
+                  <span>{SUPPORT_PHONE_DISPLAY}</span>
+                </a>
+                <a href={SUPPORT_WHATSAPP_URL} target="_blank" rel="noreferrer" className="flex items-center gap-2 transition-colors hover:text-primary">
+                  <MessageCircle className="h-4 w-4" />
+                  <span>Suporte via WhatsApp</span>
+                </a>
+              </div>
+              <p className="mt-2">Segunda a Sexta, 09h às 18h</p>
               <div className="mt-4 flex gap-4">
                 {/* Social placeholders could go here */}
               </div>
