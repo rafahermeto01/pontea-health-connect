@@ -13,6 +13,8 @@ import Login from "./pages/Login";
 import DoctorRegistration from "./pages/DoctorRegistration";
 import AffiliateRegistration from "./pages/AffiliateRegistration";
 import NotFound from "./pages/NotFound";
+import TreatmentProgram from "./pages/TreatmentProgram";
+import TreatmentQuiz from "./pages/TreatmentQuiz";
 import AffiliateDashboardLayout from "./pages/affiliate/AffiliateDashboardLayout";
 import AffiliateOverview from "./pages/affiliate/AffiliateOverview";
 import AffiliateGenerateLinks from "./pages/affiliate/AffiliateGenerateLinks";
@@ -49,6 +51,10 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="/cadastro/medico" element={<DoctorRegistration />} />
             <Route path="/cadastro/afiliado" element={<AffiliateRegistration />} />
+            <Route path="/tratamento/:slug" element={<TreatmentProgram />} />
+            <Route path="/tratamento/:slug/quiz" element={<TreatmentQuiz />} />
+            <Route path="/tratamento/:slug/resultado" element={<div className="min-h-screen flex items-center justify-center">Resultado em breve</div>} />
+            <Route path="/tratamento/:slug/checkout" element={<div className="min-h-screen flex items-center justify-center">Checkout em breve</div>} />
           </Route>
           <Route element={<ProtectedRoute />}>
             <Route path="/dashboard/afiliado" element={<AffiliateDashboardLayout />}>
