@@ -55,11 +55,14 @@ export default function TreatmentCheckout() {
           quiz_response_id: qrId,
           product_id: productId,
           billing_cycle: cycle,
-          amount: price,
+          price_cents: Math.round(price * 100),
           status: "awaiting_review",
-          payment_method: paymentMethod,
-          shipping_address: address,
-          customer_cpf: cpf.replace(/\D/g, ""),
+          payment_status: "pending",
+          shipping_address: address?.street ? `${address.street}, ${address.number} ${address.complement || ''}`.trim() : null,
+          shipping_city: address?.city || null,
+          shipping_state: address?.state || null,
+          shipping_zip: address?.cep || null,
+          patient_cpf: cpf.replace(/\D/g, ""),
           ref_code: refCode || null,
         })
         .select()
@@ -219,7 +222,7 @@ export default function TreatmentCheckout() {
                 </div>
                 <div className="pt-4 border-t border-slate-100 flex justify-between items-center">
                   <span className="text-slate-600">Total a pagar</span>
-                  <span className="font-bold text-xl text-teal-600">R$ {price.toFixed(2)}</span>
+                  <span className="font-bold text-xl text-teal-600">{price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
                 </div>
               </div>
 
