@@ -18,7 +18,7 @@ export default function TreatmentResult() {
   const [loading, setLoading] = useState(true);
   const [products, setProducts] = useState<any[]>([]);
   const [selectedProductId, setSelectedProductId] = useState<string>("");
-  const [cycle, setCycle] = useState<string>("trimestral");
+  const [cycle, setCycle] = useState<string>("quarterly");
 
   const [address, setAddress] = useState({
     cep: "",
@@ -78,11 +78,11 @@ export default function TreatmentResult() {
   const getCyclePrice = () => {
     if (!selectedProduct) return 0;
     switch (cycle) {
-      case "mensal":
+      case "monthly":
         return (selectedProduct.price_monthly_cents || 0) / 100;
-      case "trimestral":
+      case "quarterly":
         return (selectedProduct.price_quarterly_cents || selectedProduct.price_monthly_cents || 0) / 100;
-      case "semestral":
+      case "semiannual":
         return (selectedProduct.price_semiannual_cents || selectedProduct.price_monthly_cents || 0) / 100;
       default:
         return (selectedProduct.price_monthly_cents || 0) / 100;
@@ -183,9 +183,9 @@ export default function TreatmentResult() {
           <RadioGroup value={cycle} onValueChange={setCycle} className="space-y-4">
             
             {selectedProduct?.price_quarterly_cents && (
-              <Label htmlFor="trimestral" className={`flex flex-col md:flex-row md:items-center justify-between p-4 border rounded-xl cursor-pointer transition-colors ${cycle === 'trimestral' ? 'bg-teal-50 border-teal-500' : 'hover:bg-slate-50'}`}>
+              <Label htmlFor="quarterly" className={`flex flex-col md:flex-row md:items-center justify-between p-4 border rounded-xl cursor-pointer transition-colors ${cycle === 'quarterly' ? 'bg-teal-50 border-teal-500' : 'hover:bg-slate-50'}`}>
                 <div className="flex items-center gap-3 mb-2 md:mb-0">
-                  <RadioGroupItem value="trimestral" id="trimestral" />
+                  <RadioGroupItem value="quarterly" id="quarterly" />
                   <div>
                     <span className="font-semibold text-slate-900 block">Plano Trimestral</span>
                     <span className="text-sm text-slate-500">Cobrado a cada 3 meses</span>
@@ -198,9 +198,9 @@ export default function TreatmentResult() {
               </Label>
             )}
 
-            <Label htmlFor="mensal" className={`flex flex-col md:flex-row md:items-center justify-between p-4 border rounded-xl cursor-pointer transition-colors ${cycle === 'mensal' ? 'bg-teal-50 border-teal-500' : 'hover:bg-slate-50'}`}>
+            <Label htmlFor="monthly" className={`flex flex-col md:flex-row md:items-center justify-between p-4 border rounded-xl cursor-pointer transition-colors ${cycle === 'monthly' ? 'bg-teal-50 border-teal-500' : 'hover:bg-slate-50'}`}>
               <div className="flex items-center gap-3 mb-2 md:mb-0">
-                <RadioGroupItem value="mensal" id="mensal" />
+                <RadioGroupItem value="monthly" id="monthly" />
                 <div>
                   <span className="font-semibold text-slate-900 block">Plano Mensal</span>
                   <span className="text-sm text-slate-500">Cobrado mensalmente</span>
@@ -212,9 +212,9 @@ export default function TreatmentResult() {
             </Label>
 
             {selectedProduct?.price_semiannual_cents && (
-              <Label htmlFor="semestral" className={`flex flex-col md:flex-row md:items-center justify-between p-4 border rounded-xl cursor-pointer transition-colors ${cycle === 'semestral' ? 'bg-teal-50 border-teal-500' : 'hover:bg-slate-50'}`}>
+              <Label htmlFor="semiannual" className={`flex flex-col md:flex-row md:items-center justify-between p-4 border rounded-xl cursor-pointer transition-colors ${cycle === 'semiannual' ? 'bg-teal-50 border-teal-500' : 'hover:bg-slate-50'}`}>
                 <div className="flex items-center gap-3 mb-2 md:mb-0">
-                  <RadioGroupItem value="semestral" id="semestral" />
+                  <RadioGroupItem value="semiannual" id="semiannual" />
                   <div>
                     <span className="font-semibold text-slate-900 block">Plano Semestral</span>
                     <span className="text-sm text-slate-500">Cobrado a cada 6 meses</span>

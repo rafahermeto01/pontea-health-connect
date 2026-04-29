@@ -20,7 +20,8 @@ export default function TreatmentCheckout() {
   const [paymentMethod, setPaymentMethod] = useState<"pix" | "credit_card">("pix");
   
   // State from previous page
-  const { productId, cycle, price, qrId, address, productName } = location.state || {};
+  const { productId, cycle: selectedCycle, price, qrId, address, productName } = location.state || {};
+  const cycle = selectedCycle || "monthly";
 
   useEffect(() => {
     if (!location.state || !qrId || !productId) {
@@ -264,7 +265,9 @@ export default function TreatmentCheckout() {
                 </div>
                 <div>
                   <p className="text-sm text-slate-500">Ciclo de faturamento</p>
-                  <p className="font-semibold text-slate-900 capitalize">{cycle}</p>
+                  <p className="font-semibold text-slate-900 capitalize">
+                    {cycle === 'monthly' ? 'Mensal' : cycle === 'quarterly' ? 'Trimestral' : 'Semestral'}
+                  </p>
                 </div>
                 <div className="pt-4 border-t border-slate-100 flex justify-between items-center">
                   <span className="text-slate-600">Total a pagar</span>
