@@ -20,7 +20,25 @@ serve(async (req) => {
         } else if (event === "PAYMENT_OVERDUE" || event === "PAYMENT_DELETED" || event === "PAYMENT_REFUNDED") {
           await supabase.from("doctors").update({ plan_status: "expired" }).eq("id", doctor.id)
         }
+        return new Response("OK", { status: 200 })
       }
+      
+      const { data: treatOrder } = await supabase.from("treatment_orders").select("id, affiliate_id, affiliate_commission_cents").eq("asaas_payment_id", payment.id).maybeSingle()
+      if (treatOrder) {
+        if (event === "PAYMENT_CONFIRMED" || event === "PAYMENT_RECEIVED") {
+          await supabase.from("treatment_orders").update({ payment_status: "paid" }).eq("id", treatOrder.id)
+          if (treatOrder.affiliate_id && treatOrder.affiliate_commission_cents > 0) {
+            const { data: affiliate } = await supabase.from("affiliates").select("id, balance_cents, total_earned_cents").eq("id", treatOrder.affiliate_id).single()
+            if (affiliate) {
+              await supabase.from("affiliates").update({ balance_cents: (affiliate.balance_cents || 0) + treatOrder.affiliate_commission_cents, total_earned_cents: (affiliate.total_earned_cents || 0) + treatOrder.affiliate_commission_cents }).eq("id", affiliate.id)
+            }
+          }
+        } else if (event === "PAYMENT_OVERDUE" || event === "PAYMENT_DELETED" || event === "PAYMENT_REFUNDED") {
+          await supabase.from("treatment_orders").update({ payment_status: "refunded", status: "cancelled" }).eq("id", treatOrder.id)
+        }
+        return new Response("OK", { status: 200 })
+      }
+      
       return new Response("OK", { status: 200 })
     }
     if (event === "PAYMENT_CONFIRMED" || event === "PAYMENT_RECEIVED") {
