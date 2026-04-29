@@ -69,14 +69,20 @@ export type Database = {
         Row: {
           affiliate_commission_cents: number | null
           affiliate_id: string | null
+          asaas_customer_id: string | null
+          asaas_payment_id: string | null
           created_at: string | null
           doctor_id: string | null
           id: string
           notes: string | null
+          patient_cpf: string | null
           patient_email: string | null
           patient_name: string | null
           patient_phone: string | null
           payment_status: string | null
+          pix_expiration: string | null
+          pix_payload: string | null
+          pix_qr_code: string | null
           platform_fee_cents: number | null
           price_cents: number | null
           ref_code: string | null
@@ -86,14 +92,20 @@ export type Database = {
         Insert: {
           affiliate_commission_cents?: number | null
           affiliate_id?: string | null
+          asaas_customer_id?: string | null
+          asaas_payment_id?: string | null
           created_at?: string | null
           doctor_id?: string | null
           id?: string
           notes?: string | null
+          patient_cpf?: string | null
           patient_email?: string | null
           patient_name?: string | null
           patient_phone?: string | null
           payment_status?: string | null
+          pix_expiration?: string | null
+          pix_payload?: string | null
+          pix_qr_code?: string | null
           platform_fee_cents?: number | null
           price_cents?: number | null
           ref_code?: string | null
@@ -103,14 +115,20 @@ export type Database = {
         Update: {
           affiliate_commission_cents?: number | null
           affiliate_id?: string | null
+          asaas_customer_id?: string | null
+          asaas_payment_id?: string | null
           created_at?: string | null
           doctor_id?: string | null
           id?: string
           notes?: string | null
+          patient_cpf?: string | null
           patient_email?: string | null
           patient_name?: string | null
           patient_phone?: string | null
           payment_status?: string | null
+          pix_expiration?: string | null
+          pix_payload?: string | null
+          pix_qr_code?: string | null
           platform_fee_cents?: number | null
           price_cents?: number | null
           ref_code?: string | null
@@ -127,6 +145,85 @@ export type Database = {
           },
           {
             foreignKeyName: "appointments_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      blocked_slots: {
+        Row: {
+          block_full_day: boolean | null
+          blocked_date: string
+          created_at: string | null
+          doctor_id: string
+          end_time: string | null
+          id: string
+          reason: string | null
+          start_time: string | null
+        }
+        Insert: {
+          block_full_day?: boolean | null
+          blocked_date: string
+          created_at?: string | null
+          doctor_id: string
+          end_time?: string | null
+          id?: string
+          reason?: string | null
+          start_time?: string | null
+        }
+        Update: {
+          block_full_day?: boolean | null
+          blocked_date?: string
+          created_at?: string | null
+          doctor_id?: string
+          end_time?: string | null
+          id?: string
+          reason?: string | null
+          start_time?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blocked_slots_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      doctor_availability: {
+        Row: {
+          created_at: string | null
+          day_of_week: number
+          doctor_id: string
+          end_time: string
+          id: string
+          is_active: boolean | null
+          start_time: string
+        }
+        Insert: {
+          created_at?: string | null
+          day_of_week: number
+          doctor_id: string
+          end_time: string
+          id?: string
+          is_active?: boolean | null
+          start_time: string
+        }
+        Update: {
+          created_at?: string | null
+          day_of_week?: number
+          doctor_id?: string
+          end_time?: string
+          id?: string
+          is_active?: boolean | null
+          start_time?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "doctor_availability_doctor_id_fkey"
             columns: ["doctor_id"]
             isOneToOne: false
             referencedRelation: "doctors"
@@ -184,6 +281,7 @@ export type Database = {
           accepts_online: boolean | null
           accepts_presential: boolean | null
           address: string | null
+          asaas_customer_id: string | null
           avatar_url: string | null
           avg_rating: number | null
           bio: string | null
@@ -201,6 +299,12 @@ export type Database = {
           is_active: boolean | null
           phone: string | null
           plan: string | null
+          plan_expires_at: string | null
+          plan_payment_id: string | null
+          plan_price_cents: number | null
+          plan_started_at: string | null
+          plan_status: string | null
+          plan_type: string | null
           slug: string | null
           specialty: string | null
           state: string | null
@@ -213,6 +317,7 @@ export type Database = {
           accepts_online?: boolean | null
           accepts_presential?: boolean | null
           address?: string | null
+          asaas_customer_id?: string | null
           avatar_url?: string | null
           avg_rating?: number | null
           bio?: string | null
@@ -230,6 +335,12 @@ export type Database = {
           is_active?: boolean | null
           phone?: string | null
           plan?: string | null
+          plan_expires_at?: string | null
+          plan_payment_id?: string | null
+          plan_price_cents?: number | null
+          plan_started_at?: string | null
+          plan_status?: string | null
+          plan_type?: string | null
           slug?: string | null
           specialty?: string | null
           state?: string | null
@@ -242,6 +353,7 @@ export type Database = {
           accepts_online?: boolean | null
           accepts_presential?: boolean | null
           address?: string | null
+          asaas_customer_id?: string | null
           avatar_url?: string | null
           avg_rating?: number | null
           bio?: string | null
@@ -259,6 +371,12 @@ export type Database = {
           is_active?: boolean | null
           phone?: string | null
           plan?: string | null
+          plan_expires_at?: string | null
+          plan_payment_id?: string | null
+          plan_price_cents?: number | null
+          plan_started_at?: string | null
+          plan_status?: string | null
+          plan_type?: string | null
           slug?: string | null
           specialty?: string | null
           state?: string | null
@@ -340,6 +458,131 @@ export type Database = {
         }
         Relationships: []
       }
+      quiz_questions: {
+        Row: {
+          created_at: string | null
+          eliminatory_answer: string | null
+          eliminatory_message: string | null
+          help_text: string | null
+          id: string
+          is_eliminatory: boolean | null
+          is_required: boolean | null
+          options: Json | null
+          program_id: string | null
+          question_text: string
+          question_type: string
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string | null
+          eliminatory_answer?: string | null
+          eliminatory_message?: string | null
+          help_text?: string | null
+          id?: string
+          is_eliminatory?: boolean | null
+          is_required?: boolean | null
+          options?: Json | null
+          program_id?: string | null
+          question_text: string
+          question_type: string
+          sort_order: number
+        }
+        Update: {
+          created_at?: string | null
+          eliminatory_answer?: string | null
+          eliminatory_message?: string | null
+          help_text?: string | null
+          id?: string
+          is_eliminatory?: boolean | null
+          is_required?: boolean | null
+          options?: Json | null
+          program_id?: string | null
+          question_text?: string
+          question_type?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_questions_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "treatment_programs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quiz_responses: {
+        Row: {
+          answers: Json
+          created_at: string | null
+          doctor_notes: string | null
+          elimination_reason: string | null
+          id: string
+          is_eligible: boolean | null
+          patient_birthdate: string | null
+          patient_cpf: string | null
+          patient_email: string | null
+          patient_gender: string | null
+          patient_name: string | null
+          patient_phone: string | null
+          program_id: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string | null
+        }
+        Insert: {
+          answers: Json
+          created_at?: string | null
+          doctor_notes?: string | null
+          elimination_reason?: string | null
+          id?: string
+          is_eligible?: boolean | null
+          patient_birthdate?: string | null
+          patient_cpf?: string | null
+          patient_email?: string | null
+          patient_gender?: string | null
+          patient_name?: string | null
+          patient_phone?: string | null
+          program_id?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string | null
+        }
+        Update: {
+          answers?: Json
+          created_at?: string | null
+          doctor_notes?: string | null
+          elimination_reason?: string | null
+          id?: string
+          is_eligible?: boolean | null
+          patient_birthdate?: string | null
+          patient_cpf?: string | null
+          patient_email?: string | null
+          patient_gender?: string | null
+          patient_name?: string | null
+          patient_phone?: string | null
+          program_id?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_responses_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "treatment_programs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quiz_responses_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       referral_clicks: {
         Row: {
           affiliate_id: string | null
@@ -403,6 +646,195 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      treatment_orders: {
+        Row: {
+          affiliate_commission_cents: number | null
+          affiliate_id: string | null
+          asaas_payment_id: string | null
+          asaas_subscription_id: string | null
+          billing_cycle: string | null
+          created_at: string | null
+          id: string
+          patient_cpf: string
+          patient_email: string | null
+          patient_name: string
+          patient_phone: string
+          payment_status: string | null
+          price_cents: number
+          product_id: string | null
+          quiz_response_id: string | null
+          ref_code: string | null
+          shipping_address: string | null
+          shipping_city: string | null
+          shipping_state: string | null
+          shipping_zip: string | null
+          status: string | null
+          tracking_code: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          affiliate_commission_cents?: number | null
+          affiliate_id?: string | null
+          asaas_payment_id?: string | null
+          asaas_subscription_id?: string | null
+          billing_cycle?: string | null
+          created_at?: string | null
+          id?: string
+          patient_cpf: string
+          patient_email?: string | null
+          patient_name: string
+          patient_phone: string
+          payment_status?: string | null
+          price_cents: number
+          product_id?: string | null
+          quiz_response_id?: string | null
+          ref_code?: string | null
+          shipping_address?: string | null
+          shipping_city?: string | null
+          shipping_state?: string | null
+          shipping_zip?: string | null
+          status?: string | null
+          tracking_code?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          affiliate_commission_cents?: number | null
+          affiliate_id?: string | null
+          asaas_payment_id?: string | null
+          asaas_subscription_id?: string | null
+          billing_cycle?: string | null
+          created_at?: string | null
+          id?: string
+          patient_cpf?: string
+          patient_email?: string | null
+          patient_name?: string
+          patient_phone?: string
+          payment_status?: string | null
+          price_cents?: number
+          product_id?: string | null
+          quiz_response_id?: string | null
+          ref_code?: string | null
+          shipping_address?: string | null
+          shipping_city?: string | null
+          shipping_state?: string | null
+          shipping_zip?: string | null
+          status?: string | null
+          tracking_code?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "treatment_orders_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "treatment_orders_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "treatment_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "treatment_orders_quiz_response_id_fkey"
+            columns: ["quiz_response_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_responses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      treatment_products: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          duration_months: number | null
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          name: string
+          price_monthly_cents: number
+          price_quarterly_cents: number | null
+          price_semiannual_cents: number | null
+          program_id: string | null
+          sort_order: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          duration_months?: number | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          name: string
+          price_monthly_cents: number
+          price_quarterly_cents?: number | null
+          price_semiannual_cents?: number | null
+          program_id?: string | null
+          sort_order?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          duration_months?: number | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          name?: string
+          price_monthly_cents?: number
+          price_quarterly_cents?: number | null
+          price_semiannual_cents?: number | null
+          program_id?: string | null
+          sort_order?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "treatment_products_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "treatment_programs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      treatment_programs: {
+        Row: {
+          category: string
+          created_at: string | null
+          description: string | null
+          hero_subtitle: string | null
+          hero_title: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          slug: string
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          description?: string | null
+          hero_subtitle?: string | null
+          hero_title?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          slug: string
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          description?: string | null
+          hero_subtitle?: string | null
+          hero_title?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          slug?: string
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {
