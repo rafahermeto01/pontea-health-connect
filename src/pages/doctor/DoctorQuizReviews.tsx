@@ -21,6 +21,8 @@ export default function DoctorQuizReviews() {
   
   const [doctorNotes, setDoctorNotes] = useState("");
   const [actionReason, setActionReason] = useState("");
+  const [questionMap, setQuestionMap] = useState<Record<string, string>>({});
+  const [orderedQuestions, setOrderedQuestions] = useState<any[]>([]);
 
   const fetchResponses = async () => {
     setLoading(true);
@@ -48,12 +50,28 @@ export default function DoctorQuizReviews() {
     if (doctor?.id) fetchResponses();
   }, [doctor?.id]);
 
-  const handleOpenReview = (response: any) => {
+  const handleOpenReview = async (response: any) => {
     setSelectedReview(response);
     setDoctorNotes(response.doctor_notes || "");
     setIsModalOpen(true);
     setActionType(null);
     setActionReason("");
+    
+    try {
+      const { data: questions } = await supabase
+        .from('quiz_questions')
+        .select('id, question_text, sort_order')
+        .eq('program_id', response.program_id)
+        .order('sort_order');
+      
+      if (questions) {
+        setOrderedQuestions(questions);
+        const map = Object.fromEntries(questions.map((q: any) => [q.id, q.question_text]));
+        setQuestionMap(map);
+      }
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const handleAction = async () => {
@@ -203,7 +221,7 @@ export default function DoctorQuizReviews() {
                   <h3 className="font-bold text-slate-900 mb-3 border-b pb-2">Dados do Paciente</h3>
                   <div className="space-y-2 text-sm">
                     <p><span className="text-slate-500 block text-xs uppercase">Nome</span> {selectedReview.patient_name}</p>
-                    <p><span className="text-slate-500 block text-xs uppercase">Idade / Nasc.</span> {new Date(selectedReview.patient_birthdate).toLocaleDateString('pt-BR')}</p>
+                    <p><span className="text-slate-500 block text-xs uppercase">Idade / Nasc.</span> {new Date(selectedReview.patient_birthdate + 'T12:00:00').toLocaleDateString('pt-BR')}</p>
                     <p><span className="text-slate-500 block text-xs uppercase">Sexo</span> {selectedReview.patient_gender === 'male' ? 'Masculino' : 'Feminino'}</p>
                     <p><span className="text-slate-500 block text-xs uppercase">IMC Estimado</span> {calculateBMI(selectedReview.answers)}</p>
                   </div>
@@ -228,18 +246,29 @@ export default function DoctorQuizReviews() {
                   </div>
                   <div className="p-4 space-y-4 max-h-[400px] overflow-y-auto">
                     {typeof selectedReview.answers === 'object' && selectedReview.answers !== null ? (
-                      Object.entries(selectedReview.answers).map(([qId, answer]: [string, any], idx) => (
-                        <div key={qId} className="border-b pb-3 last:border-0 last:pb-0">
-                          <p className="text-xs text-slate-500 font-medium mb-1">Pergunta {idx + 1}</p>
-                          <p className="text-sm font-semibold text-slate-900 mb-1">
-                            {/* In a real implementation, we might want to map qId to actual question text if we saved it or fetch it */}
-                            ID da Pergunta: {qId}
-                          </p>
-                          <p className="text-sm text-slate-700 bg-slate-50 p-2 rounded">
-                            {Array.isArray(answer) ? answer.join(', ') : String(answer)}
-                          </p>
-                        </div>
-                      ))
+                      orderedQuestions.length > 0 ? (
+                        orderedQuestions.map((q) => {
+                          const answer = selectedReview.answers[q.id];
+                          if (answer === undefined) return null;
+                          return (
+                            <div key={q.id} className="border-b pb-3 last:border-0 last:pb-0">
+                              <p className="text-sm font-semibold text-slate-700 mb-1">{q.question_text}</p>
+                              <p className="text-sm text-slate-900 bg-slate-50 p-3 rounded border border-slate-100">
+                                {Array.isArray(answer) ? answer.join(', ') : String(answer)}
+                              </p>
+                            </div>
+                          )
+                        })
+                      ) : (
+                        Object.entries(selectedReview.answers).map(([qId, answer]: [string, any], idx) => (
+                          <div key={qId} className="border-b pb-3 last:border-0 last:pb-0">
+                            <p className="text-sm font-semibold text-slate-700 mb-1">{questionMap[qId] || `Pergunta ID: ${qId}`}</p>
+                            <p className="text-sm text-slate-900 bg-slate-50 p-3 rounded border border-slate-100">
+                              {Array.isArray(answer) ? answer.join(', ') : String(answer)}
+                            </p>
+                          </div>
+                        ))
+                      )
                     ) : (
                       <p className="text-slate-500 text-sm">Nenhuma resposta encontrada.</p>
                     )}
