@@ -15,6 +15,8 @@ export default function TreatmentCheckout() {
 
   const [step, setStep] = useState<"checkout" | "processing" | "success">("checkout");
   const [cpf, setCpf] = useState("");
+  const [patientData, setPatientData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   const [paymentMethod, setPaymentMethod] = useState<"pix" | "credit_card">("pix");
   
   // State from previous page
@@ -24,7 +26,40 @@ export default function TreatmentCheckout() {
     if (!location.state || !qrId || !productId) {
       toast.error("Sessão de checkout inválida.");
       navigate(`/tratamento/${slug}`);
+      return;
     }
+
+    const fetchQuizData = async () => {
+      try {
+        const { data: quizResponse, error } = await supabase
+          .from("quiz_responses")
+          .select("patient_name, patient_email, patient_phone, patient_cpf")
+          .eq("id", qrId)
+          .single();
+
+        if (error || !quizResponse) {
+          throw new Error("Quiz não encontrado");
+        }
+
+        setPatientData(quizResponse);
+        if (quizResponse.patient_cpf) {
+          let c = quizResponse.patient_cpf.replace(/\D/g, "");
+          if (c.length > 11) c = c.substring(0, 11);
+          c = c.replace(/(\d{3})(\d)/, "$1.$2");
+          c = c.replace(/(\d{3})(\d)/, "$1.$2");
+          c = c.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+          setCpf(c);
+        }
+      } catch (err) {
+        console.error(err);
+        toast.error("Sessão expirada. Por favor refaça o questionário.");
+        navigate(`/tratamento/${slug}/quiz`);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchQuizData();
   }, [location.state, navigate, qrId, productId, slug]);
 
   const handleCpfChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -62,6 +97,9 @@ export default function TreatmentCheckout() {
           shipping_city: address?.city || null,
           shipping_state: address?.state || null,
           shipping_zip: address?.cep || null,
+          patient_name: patientData?.patient_name || "Paciente",
+          patient_email: patientData?.patient_email || null,
+          patient_phone: patientData?.patient_phone || "00000000000",
           patient_cpf: cpf.replace(/\D/g, ""),
           ref_code: refCode || null,
         })
@@ -90,6 +128,14 @@ export default function TreatmentCheckout() {
   };
 
   if (!location.state) return null;
+  
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+        <Loader2 className="w-8 h-8 text-teal-600 animate-spin" />
+      </div>
+    );
+  }
 
   if (step === "success") {
     return (
