@@ -27,6 +27,10 @@ export default function TreatmentQuiz() {
     birthdate: "",
     gender: "",
   });
+  
+  const [birthDay, setBirthDay] = useState("");
+  const [birthMonth, setBirthMonth] = useState("");
+  const [birthYear, setBirthYear] = useState("");
 
   // Answers State: mapping question id to answer value
   const [answers, setAnswers] = useState<Record<string, any>>({});
@@ -71,10 +75,45 @@ export default function TreatmentQuiz() {
   // Handle start quiz
   const handleStartQuiz = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!personalInfo.name || !personalInfo.email || !personalInfo.phone || !personalInfo.birthdate || !personalInfo.gender) {
+    if (!personalInfo.name || !personalInfo.email || !personalInfo.phone || !birthDay || !birthMonth || !birthYear || !personalInfo.gender) {
       toast.error("Por favor, preencha todos os campos.");
       return;
     }
+
+    const d = parseInt(birthDay, 10);
+    const m = parseInt(birthMonth, 10);
+    const y = parseInt(birthYear, 10);
+    const currentYear = new Date().getFullYear();
+
+    if (isNaN(d) || d < 1 || d > 31) {
+      toast.error("Dia de nascimento inválido.");
+      return;
+    }
+    if (isNaN(m) || m < 1 || m > 12) {
+      toast.error("Mês de nascimento inválido.");
+      return;
+    }
+    if (isNaN(y) || y < 1920 || y > currentYear) {
+      toast.error("Ano de nascimento inválido.");
+      return;
+    }
+
+    const birthDateObj = new Date(y, m - 1, d);
+    const today = new Date();
+    let age = today.getFullYear() - birthDateObj.getFullYear();
+    const mDiff = today.getMonth() - birthDateObj.getMonth();
+    if (mDiff < 0 || (mDiff === 0 && today.getDate() < birthDateObj.getDate())) {
+      age--;
+    }
+
+    if (age < 18) {
+      toast.error("Você precisa ter pelo menos 18 anos.");
+      return;
+    }
+
+    const formattedBirthdate = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    setPersonalInfo({ ...personalInfo, birthdate: formattedBirthdate });
+
     setStep("quiz");
   };
 
@@ -251,14 +290,39 @@ export default function TreatmentQuiz() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="birthdate">Data de nascimento</Label>
-              <Input
-                id="birthdate"
-                type="date"
-                required
-                value={personalInfo.birthdate}
-                onChange={(e) => setPersonalInfo({ ...personalInfo, birthdate: e.target.value })}
-              />
+              <Label>Data de nascimento</Label>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="DD"
+                  type="number"
+                  min="1"
+                  max="31"
+                  required
+                  className="bg-slate-50 border border-slate-200 rounded-xl text-center flex-1"
+                  value={birthDay}
+                  onChange={(e) => setBirthDay(e.target.value.slice(0, 2))}
+                />
+                <Input
+                  placeholder="MM"
+                  type="number"
+                  min="1"
+                  max="12"
+                  required
+                  className="bg-slate-50 border border-slate-200 rounded-xl text-center flex-1"
+                  value={birthMonth}
+                  onChange={(e) => setBirthMonth(e.target.value.slice(0, 2))}
+                />
+                <Input
+                  placeholder="AAAA"
+                  type="number"
+                  min="1920"
+                  max={new Date().getFullYear()}
+                  required
+                  className="bg-slate-50 border border-slate-200 rounded-xl text-center flex-1"
+                  value={birthYear}
+                  onChange={(e) => setBirthYear(e.target.value.slice(0, 4))}
+                />
+              </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="gender">Sexo biológico</Label>
