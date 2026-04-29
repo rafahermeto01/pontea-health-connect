@@ -1,4 +1,4 @@
-import { BarChart3, Calendar, User, DollarSign, Star, LogOut, Clock, Crown, HelpCircle } from "lucide-react";
+import { BarChart3, Calendar, User, DollarSign, Star, LogOut, Clock, Crown, HelpCircle, FileSearch } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,6 +24,7 @@ const items = [
   { title: "Meu Perfil", url: "/dashboard/medico/perfil", icon: User },
   { title: "Financeiro", url: "/dashboard/medico/financeiro", icon: DollarSign },
   { title: "Avaliações", url: "/dashboard/medico/avaliacoes", icon: Star },
+  { title: "Avali. Clínicas", url: "/dashboard/medico/avaliacoes-clinicas", icon: FileSearch },
 ];
 
 export default function DoctorSidebar({ doctorName, planType }: { doctorName: string | null, planType?: string | null }) {

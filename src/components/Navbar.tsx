@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 
 const navLinks = [
+  { label: "Tratamentos", href: "/tratamento/emagrecimento-glp1" },
   { label: "Buscar Médicos", href: "/buscar" },
   { label: "Para Médicos", href: "/para-medicos" },
   { label: "Para Afiliados", href: "/para-afiliados" },

@@ -15,6 +15,8 @@ import AffiliateRegistration from "./pages/AffiliateRegistration";
 import NotFound from "./pages/NotFound";
 import TreatmentProgram from "./pages/TreatmentProgram";
 import TreatmentQuiz from "./pages/TreatmentQuiz";
+import TreatmentResult from "./pages/TreatmentResult";
+import TreatmentCheckout from "./pages/TreatmentCheckout";
 import AffiliateDashboardLayout from "./pages/affiliate/AffiliateDashboardLayout";
 import AffiliateOverview from "./pages/affiliate/AffiliateOverview";
 import AffiliateGenerateLinks from "./pages/affiliate/AffiliateGenerateLinks";
@@ -32,6 +34,15 @@ import DoctorAgenda from "./pages/doctor/DoctorAgenda";
 import DoctorProfileEdit from "./pages/doctor/DoctorProfileEdit";
 import DoctorFinancial from "./pages/doctor/DoctorFinancial";
 import DoctorReviews from "./pages/doctor/DoctorReviews";
+import DoctorQuizReviews from "./pages/doctor/DoctorQuizReviews";
+
+import AdminProtectedRoute from "@/components/AdminProtectedRoute";
+import AdminLayout from "./pages/admin/AdminLayout";
+import AdminOverview from "./pages/admin/AdminOverview";
+import AdminQuizzes from "./pages/admin/AdminQuizzes";
+import AdminOrders from "./pages/admin/AdminOrders";
+import AdminDoctors from "./pages/admin/AdminDoctors";
+import AdminAffiliates from "./pages/admin/AdminAffiliates";
 
 const queryClient = new QueryClient();
 
@@ -53,9 +64,20 @@ const App = () => (
             <Route path="/cadastro/afiliado" element={<AffiliateRegistration />} />
             <Route path="/tratamento/:slug" element={<TreatmentProgram />} />
             <Route path="/tratamento/:slug/quiz" element={<TreatmentQuiz />} />
-            <Route path="/tratamento/:slug/resultado" element={<div className="min-h-screen flex items-center justify-center">Resultado em breve</div>} />
-            <Route path="/tratamento/:slug/checkout" element={<div className="min-h-screen flex items-center justify-center">Checkout em breve</div>} />
+            <Route path="/tratamento/:slug/resultado" element={<TreatmentResult />} />
+            <Route path="/tratamento/:slug/checkout" element={<TreatmentCheckout />} />
           </Route>
+          
+          <Route element={<AdminProtectedRoute />}>
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route index element={<AdminOverview />} />
+              <Route path="quizzes" element={<AdminQuizzes />} />
+              <Route path="pedidos" element={<AdminOrders />} />
+              <Route path="medicos" element={<AdminDoctors />} />
+              <Route path="afiliados" element={<AdminAffiliates />} />
+            </Route>
+          </Route>
+
           <Route element={<ProtectedRoute />}>
             <Route path="/dashboard/afiliado" element={<AffiliateDashboardLayout />}>
               <Route index element={<AffiliateOverview />} />
@@ -72,6 +94,7 @@ const App = () => (
               <Route path="perfil" element={<DoctorProfileEdit />} />
               <Route path="financeiro" element={<DoctorFinancial />} />
               <Route path="avaliacoes" element={<DoctorReviews />} />
+              <Route path="avaliacoes-clinicas" element={<DoctorQuizReviews />} />
             </Route>
           </Route>
           <Route path="*" element={<NotFound />} />
