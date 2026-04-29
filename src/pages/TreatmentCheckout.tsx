@@ -13,11 +13,13 @@ export default function TreatmentCheckout() {
   const navigate = useNavigate();
   const { slug } = useParams();
 
-  const [step, setStep] = useState<"checkout" | "processing" | "success">("checkout");
+  const [step, setStep] = useState<"checkout" | "processing" | "pix_payment" | "success">("checkout");
   const [cpf, setCpf] = useState("");
   const [patientData, setPatientData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [paymentMethod, setPaymentMethod] = useState<"pix" | "credit_card">("pix");
+  const [pixData, setPixData] = useState<{ qrCode: string; payload: string; orderId: string; value: number } | null>(null);
+  const [creditCard, setCreditCard] = useState({ number: "", holderName: "", expiry: "", ccv: "" });
   
   // State from previous page
   const { productId, cycle: selectedCycle, price, qrId, address, productName } = location.state || {};
@@ -63,6 +65,39 @@ export default function TreatmentCheckout() {
     fetchQuizData();
   }, [location.state, navigate, qrId, productId, slug]);
 
+  // Polling for PIX payment
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    let timeout: NodeJS.Timeout;
+
+    if (step === "pix_payment" && pixData?.orderId) {
+      interval = setInterval(async () => {
+        const { data: order } = await supabase
+          .from("treatment_orders")
+          .select("payment_status")
+          .eq("id", pixData.orderId)
+          .single();
+
+        if (order?.payment_status === "paid") {
+          clearInterval(interval);
+          clearTimeout(timeout);
+          setStep("success");
+        }
+      }, 5000);
+
+      timeout = setTimeout(() => {
+        clearInterval(interval);
+        toast.error("Tempo de pagamento expirado.");
+        setStep("checkout");
+      }, 15 * 60 * 1000);
+    }
+
+    return () => {
+      if (interval) clearInterval(interval);
+      if (timeout) clearTimeout(timeout);
+    };
+  }, [step, pixData?.orderId]);
+
   const handleCpfChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let value = e.target.value.replace(/\D/g, "");
     if (value.length > 11) value = value.substring(0, 11);
@@ -78,52 +113,88 @@ export default function TreatmentCheckout() {
       return;
     }
 
+    if (paymentMethod === "credit_card") {
+      if (!creditCard.number || !creditCard.holderName || !creditCard.expiry || !creditCard.ccv) {
+        toast.error("Preencha todos os dados do cartão.");
+        return;
+      }
+    }
+
     setStep("processing");
 
     try {
-      // 1. Get affiliate tracking
-      const refCode = Cookies.get("pontea_ref");
+      const refCode = Cookies.get("pontea_ref") || localStorage.getItem("pontea_ref") || null;
       
-      // 2. Create treatment order
-      const { data: orderData, error: orderError } = await supabase
-        .from("treatment_orders")
-        .insert({
-          quiz_response_id: qrId,
-          product_id: productId,
-          billing_cycle: cycle,
-          price_cents: Math.round(price * 100),
-          status: "awaiting_review",
-          payment_status: "pending",
-          shipping_address: address?.street ? `${address.street}, ${address.number} ${address.complement || ''}`.trim() : null,
-          shipping_city: address?.city || null,
-          shipping_state: address?.state || null,
-          shipping_zip: address?.cep || null,
-          patient_name: patientData?.patient_name || "Paciente",
-          patient_email: patientData?.patient_email || null,
-          patient_phone: patientData?.patient_phone || "00000000000",
-          patient_cpf: cpf.replace(/\D/g, ""),
-          ref_code: refCode || null,
-        })
-        .select()
-        .single();
+      const payload: any = {
+        quiz_response_id: qrId,
+        product_id: productId,
+        patient_name: patientData?.patient_name || "Paciente",
+        patient_email: patientData?.patient_email || undefined,
+        patient_phone: patientData?.patient_phone || "00000000000",
+        patient_cpf: cpf.replace(/\D/g, ""),
+        billing_cycle: cycle,
+        payment_method: paymentMethod === "pix" ? "PIX" : "CREDIT_CARD",
+        shipping_address: address?.street ? `${address.street}, ${address.number} ${address.complement || ''}`.trim() : undefined,
+        shipping_city: address?.city || undefined,
+        shipping_state: address?.state || undefined,
+        shipping_zip: address?.cep || undefined,
+        ref_code: refCode
+      };
 
-      if (orderError) throw orderError;
-
-      // 3. Mock Payment processing / edge function call
-      if (paymentMethod === "pix") {
-        // Here we would call the edge function create-treatment-payment
-        // For now we simulate success
-        await new Promise(r => setTimeout(r, 2000));
-        setStep("success");
-      } else {
-        // Credit card logic
-        await new Promise(r => setTimeout(r, 2000));
-        setStep("success");
+      if (paymentMethod === "credit_card") {
+        const [expiryMonth, expiryYear] = creditCard.expiry.split("/");
+        payload.credit_card = {
+          holderName: creditCard.holderName,
+          number: creditCard.number.replace(/\D/g, ""),
+          expiryMonth: expiryMonth?.trim(),
+          expiryYear: expiryYear?.trim(),
+          ccv: creditCard.ccv
+        };
+        payload.credit_card_holder = {
+          name: creditCard.holderName,
+          email: patientData?.patient_email || "",
+          cpfCnpj: cpf.replace(/\D/g, ""),
+          postalCode: address?.cep || "",
+          addressNumber: address?.number || "",
+          phone: patientData?.patient_phone || ""
+        };
+        payload.remote_ip = "127.0.0.1";
       }
 
-    } catch (error) {
+      const response = await fetch('https://bouaarijeoqswyigjfca.supabase.co/functions/v1/create-treatment-payment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await response.json();
+
+      if (data.error || !data.success) {
+        throw new Error(data.error || "Erro ao processar pagamento.");
+      }
+
+      if (paymentMethod === "pix") {
+        setPixData({ 
+          qrCode: data.pix_qr_code, 
+          payload: data.pix_payload, 
+          orderId: data.order_id,
+          value: data.value || price
+        });
+        setStep("pix_payment");
+      } else {
+        if (data.payment_status === "paid" || data.payment_status === "awaiting_review") {
+          setStep("success");
+        } else {
+          toast.error("O pagamento com cartão foi recusado ou está pendente.");
+          setStep("checkout");
+        }
+      }
+
+    } catch (error: any) {
       console.error(error);
-      toast.error("Erro ao processar pedido. Tente novamente.");
+      toast.error(error.message || "Erro ao processar pedido. Tente novamente.");
       setStep("checkout");
     }
   };
@@ -134,6 +205,58 @@ export default function TreatmentCheckout() {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
         <Loader2 className="w-8 h-8 text-teal-600 animate-spin" />
+      </div>
+    );
+  }
+
+  if (step === "pix_payment" && pixData) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+        <div className="bg-white max-w-md w-full p-8 rounded-2xl shadow-sm text-center">
+          <div className="w-16 h-16 bg-teal-100 text-teal-600 rounded-full flex items-center justify-center mx-auto mb-6">
+            <QrCode className="w-8 h-8" />
+          </div>
+          <h2 className="text-2xl font-bold text-slate-900 mb-2">Pagamento via PIX</h2>
+          <p className="text-slate-600 mb-6">
+            Escaneie o QR Code ou cole o código no app do seu banco
+          </p>
+          
+          <div className="bg-slate-50 p-4 rounded-xl mb-6">
+            <img 
+              src={`data:image/png;base64,${pixData.qrCode}`} 
+              alt="QR Code PIX" 
+              className="w-64 h-64 mx-auto object-contain mix-blend-multiply" 
+            />
+          </div>
+
+          <div className="mb-6">
+            <Label className="text-left block mb-2">Código PIX Copia e Cola</Label>
+            <div className="flex gap-2">
+              <Input value={pixData.payload} readOnly className="bg-slate-50 font-mono text-xs" />
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  navigator.clipboard.writeText(pixData.payload);
+                  toast.success("Código copiado!");
+                }}
+              >
+                Copiar
+              </Button>
+            </div>
+          </div>
+
+          <div className="bg-teal-50 border border-teal-100 rounded-xl p-4 text-center mb-6">
+            <p className="text-sm text-teal-800 mb-1">Valor do pedido</p>
+            <p className="text-2xl font-bold text-teal-900">
+              {pixData.value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+            </p>
+          </div>
+
+          <div className="flex items-center justify-center gap-2 text-slate-500 animate-pulse">
+            <Loader2 className="w-4 h-4 animate-spin" />
+            <span className="text-sm font-medium">Aguardando pagamento...</span>
+          </div>
+        </div>
       </div>
     );
   }
@@ -222,21 +345,38 @@ export default function TreatmentCheckout() {
                 <div className="space-y-4 animate-in fade-in slide-in-from-top-4">
                   <div className="space-y-2">
                     <Label>Número do Cartão</Label>
-                    <Input placeholder="0000 0000 0000 0000" />
+                    <Input 
+                      placeholder="0000 0000 0000 0000" 
+                      value={creditCard.number}
+                      onChange={e => setCreditCard({...creditCard, number: e.target.value})}
+                    />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>Validade</Label>
-                      <Input placeholder="MM/AA" />
+                      <Input 
+                        placeholder="MM/AA" 
+                        value={creditCard.expiry}
+                        onChange={e => setCreditCard({...creditCard, expiry: e.target.value})}
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label>CVC</Label>
-                      <Input placeholder="123" />
+                      <Input 
+                        placeholder="123" 
+                        value={creditCard.ccv}
+                        onChange={e => setCreditCard({...creditCard, ccv: e.target.value})}
+                        maxLength={4}
+                      />
                     </div>
                   </div>
                   <div className="space-y-2">
                     <Label>Nome no Cartão</Label>
-                    <Input placeholder="Nome como impresso no cartão" />
+                    <Input 
+                      placeholder="Nome como impresso no cartão" 
+                      value={creditCard.holderName}
+                      onChange={e => setCreditCard({...creditCard, holderName: e.target.value})}
+                    />
                   </div>
                 </div>
               )}
