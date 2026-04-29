@@ -31,7 +31,7 @@ export default function AdminQuizzes() {
         .from("quiz_responses")
         .select(`
           *,
-          treatment_programs ( title, name ),
+          treatment_programs ( name ),
           treatment_orders ( product_id, billing_cycle, treatment_products(name) )
         `)
         .order("created_at", { ascending: false });
@@ -214,7 +214,7 @@ export default function AdminQuizzes() {
                     <div className="text-sm">{resp.patient_email}</div>
                     <div className="text-xs text-slate-500">{resp.patient_phone}</div>
                   </TableCell>
-                  <TableCell>{resp.treatment_programs?.title || resp.treatment_programs?.name || "Programa"}</TableCell>
+                  <TableCell>{resp.treatment_programs?.name || "Programa"}</TableCell>
                   <TableCell>{getStatusBadge(resp.status)}</TableCell>
                   <TableCell className="text-right">
                     <Button variant="outline" size="sm" onClick={() => handleOpenReview(resp)}>

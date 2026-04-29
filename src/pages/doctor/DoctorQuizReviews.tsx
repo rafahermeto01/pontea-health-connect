@@ -29,7 +29,7 @@ export default function DoctorQuizReviews() {
         .from("quiz_responses")
         .select(`
           *,
-          treatment_programs ( title, name )
+          treatment_programs ( name )
         `)
         .eq("status", "pending")
         .order("created_at", { ascending: false });
@@ -164,7 +164,7 @@ export default function DoctorQuizReviews() {
                 <TableRow key={resp.id}>
                   <TableCell>{new Date(resp.created_at).toLocaleDateString("pt-BR")}</TableCell>
                   <TableCell className="font-medium">{resp.patient_name}</TableCell>
-                  <TableCell>{resp.treatment_programs?.title || resp.treatment_programs?.name || "Programa"}</TableCell>
+                  <TableCell>{resp.treatment_programs?.name || "Programa"}</TableCell>
                   <TableCell>
                     <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
                       Pendente
