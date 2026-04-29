@@ -77,16 +77,15 @@ export default function TreatmentResult() {
   // Price calculations based on cycle
   const getCyclePrice = () => {
     if (!selectedProduct) return 0;
-    const basePrice = selectedProduct.price;
     switch (cycle) {
       case "mensal":
-        return basePrice;
+        return (selectedProduct.price_monthly_cents || 0) / 100;
       case "trimestral":
-        return basePrice * 0.9; // 10% discount
+        return (selectedProduct.price_quarterly_cents || selectedProduct.price_monthly_cents || 0) / 100;
       case "semestral":
-        return basePrice * 0.8; // 20% discount
+        return (selectedProduct.price_semiannual_cents || selectedProduct.price_monthly_cents || 0) / 100;
       default:
-        return basePrice;
+        return (selectedProduct.price_monthly_cents || 0) / 100;
     }
   };
 
@@ -170,8 +169,7 @@ export default function TreatmentResult() {
                   <h3 className="font-bold text-lg md:text-xl text-slate-900 mb-1">{product.name}</h3>
                   <p className="text-slate-600 text-sm md:text-base mb-4 line-clamp-2">{product.description}</p>
                   <div className="flex items-center gap-3">
-                    <span className="text-slate-400 line-through text-sm">R$ {product.price.toFixed(2)}/mês</span>
-                    <span className="font-bold text-lg text-teal-600">R$ {(product.price * 0.9).toFixed(2)}/mês*</span>
+                    <span className="font-bold text-lg text-teal-600">{((product.price_monthly_cents || 0) / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}/mês*</span>
                   </div>
                 </div>
               </div>
@@ -184,19 +182,21 @@ export default function TreatmentResult() {
           <h2 className="text-xl font-bold text-slate-900 mb-6">Resumo do seu tratamento</h2>
           <RadioGroup value={cycle} onValueChange={setCycle} className="space-y-4">
             
-            <Label htmlFor="trimestral" className={`flex flex-col md:flex-row md:items-center justify-between p-4 border rounded-xl cursor-pointer transition-colors ${cycle === 'trimestral' ? 'bg-teal-50 border-teal-500' : 'hover:bg-slate-50'}`}>
-              <div className="flex items-center gap-3 mb-2 md:mb-0">
-                <RadioGroupItem value="trimestral" id="trimestral" />
-                <div>
-                  <span className="font-semibold text-slate-900 block">Plano Trimestral</span>
-                  <span className="text-sm text-slate-500">Cobrado a cada 3 meses</span>
+            {selectedProduct?.price_quarterly_cents && (
+              <Label htmlFor="trimestral" className={`flex flex-col md:flex-row md:items-center justify-between p-4 border rounded-xl cursor-pointer transition-colors ${cycle === 'trimestral' ? 'bg-teal-50 border-teal-500' : 'hover:bg-slate-50'}`}>
+                <div className="flex items-center gap-3 mb-2 md:mb-0">
+                  <RadioGroupItem value="trimestral" id="trimestral" />
+                  <div>
+                    <span className="font-semibold text-slate-900 block">Plano Trimestral</span>
+                    <span className="text-sm text-slate-500">Cobrado a cada 3 meses</span>
+                  </div>
                 </div>
-              </div>
-              <div className="text-left md:text-right">
-                <span className="font-bold text-lg text-slate-900 block">R$ {(selectedProduct?.price * 0.9).toFixed(2)} <span className="text-sm font-normal text-slate-500">/mês</span></span>
-                <span className="inline-block bg-teal-100 text-teal-800 text-xs font-semibold px-2 py-1 rounded">Economize 10%</span>
-              </div>
-            </Label>
+                <div className="text-left md:text-right">
+                  <span className="font-bold text-lg text-slate-900 block">{((selectedProduct.price_quarterly_cents || 0) / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} <span className="text-sm font-normal text-slate-500">/mês</span></span>
+                  <span className="inline-block bg-teal-100 text-teal-800 text-xs font-semibold px-2 py-1 rounded">Maior custo-benefício</span>
+                </div>
+              </Label>
+            )}
 
             <Label htmlFor="mensal" className={`flex flex-col md:flex-row md:items-center justify-between p-4 border rounded-xl cursor-pointer transition-colors ${cycle === 'mensal' ? 'bg-teal-50 border-teal-500' : 'hover:bg-slate-50'}`}>
               <div className="flex items-center gap-3 mb-2 md:mb-0">
@@ -207,23 +207,25 @@ export default function TreatmentResult() {
                 </div>
               </div>
               <div className="text-left md:text-right">
-                <span className="font-bold text-lg text-slate-900 block">R$ {selectedProduct?.price.toFixed(2)} <span className="text-sm font-normal text-slate-500">/mês</span></span>
+                <span className="font-bold text-lg text-slate-900 block">{((selectedProduct?.price_monthly_cents || 0) / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} <span className="text-sm font-normal text-slate-500">/mês</span></span>
               </div>
             </Label>
 
-            <Label htmlFor="semestral" className={`flex flex-col md:flex-row md:items-center justify-between p-4 border rounded-xl cursor-pointer transition-colors ${cycle === 'semestral' ? 'bg-teal-50 border-teal-500' : 'hover:bg-slate-50'}`}>
-              <div className="flex items-center gap-3 mb-2 md:mb-0">
-                <RadioGroupItem value="semestral" id="semestral" />
-                <div>
-                  <span className="font-semibold text-slate-900 block">Plano Semestral</span>
-                  <span className="text-sm text-slate-500">Cobrado a cada 6 meses</span>
+            {selectedProduct?.price_semiannual_cents && (
+              <Label htmlFor="semestral" className={`flex flex-col md:flex-row md:items-center justify-between p-4 border rounded-xl cursor-pointer transition-colors ${cycle === 'semestral' ? 'bg-teal-50 border-teal-500' : 'hover:bg-slate-50'}`}>
+                <div className="flex items-center gap-3 mb-2 md:mb-0">
+                  <RadioGroupItem value="semestral" id="semestral" />
+                  <div>
+                    <span className="font-semibold text-slate-900 block">Plano Semestral</span>
+                    <span className="text-sm text-slate-500">Cobrado a cada 6 meses</span>
+                  </div>
                 </div>
-              </div>
-              <div className="text-left md:text-right">
-                <span className="font-bold text-lg text-slate-900 block">R$ {(selectedProduct?.price * 0.8).toFixed(2)} <span className="text-sm font-normal text-slate-500">/mês</span></span>
-                <span className="inline-block bg-teal-100 text-teal-800 text-xs font-semibold px-2 py-1 rounded">Maior economia (20%)</span>
-              </div>
-            </Label>
+                <div className="text-left md:text-right">
+                  <span className="font-bold text-lg text-slate-900 block">{((selectedProduct.price_semiannual_cents || 0) / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} <span className="text-sm font-normal text-slate-500">/mês</span></span>
+                  <span className="inline-block bg-teal-100 text-teal-800 text-xs font-semibold px-2 py-1 rounded">Maior economia</span>
+                </div>
+              </Label>
+            )}
 
           </RadioGroup>
         </div>
@@ -265,7 +267,7 @@ export default function TreatmentResult() {
             className="w-full bg-teal-600 hover:bg-teal-700 text-white rounded-xl py-6 text-lg font-bold shadow-lg md:shadow-none"
             onClick={handleStartTreatment}
           >
-            Iniciar tratamento — R$ {getCyclePrice().toFixed(2)}/mês
+            Iniciar tratamento — {getCyclePrice().toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}/mês
           </Button>
         </div>
 
