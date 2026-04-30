@@ -128,7 +128,7 @@ export default function DoctorQuizReviews() {
     // Assuming keys might contain 'weight' or 'height' or in portuguese 'peso', 'altura'
     // This is a heuristic. In a real scenario, the question IDs or keys should be deterministic.
     let weight = 0;
-    let height = 0;
+    let height = 0; // expected in cm
     
     if (typeof answers === 'object' && answers !== null) {
       Object.entries(answers).forEach(([key, val]) => {
@@ -139,13 +139,14 @@ export default function DoctorQuizReviews() {
         }
         if (key.includes("altura") || strVal.includes("cm") || strVal.includes("m")) {
            const num = parseFloat(strVal.replace(/[^0-9.]/g, ''));
-           if (num) height = num > 3 ? num / 100 : num; // convert cm to m
+           if (num) height = num; // Altura informada pelo paciente (centímetros)
         }
       });
     }
 
     if (weight > 0 && height > 0) {
-      return (weight / (height * height)).toFixed(1);
+      const alturaMetros = height / 100;
+      return (weight / (alturaMetros * alturaMetros)).toFixed(1);
     }
     return "N/A";
   };

@@ -148,13 +148,14 @@ export default function AdminQuizzes() {
         }
         if (key.includes("altura") || strVal.includes("cm") || strVal.includes("m")) {
            const num = parseFloat(strVal.replace(/[^0-9.]/g, ''));
-           if (num) height = num > 3 ? num / 100 : num;
+           if (num) height = num; // Altura em centímetros
         }
       });
     }
 
     if (weight > 0 && height > 0) {
-      return (weight / (height * height)).toFixed(1);
+      const alturaMetros = height / 100;
+      return (weight / (alturaMetros * alturaMetros)).toFixed(1);
     }
     return "N/A";
   };
