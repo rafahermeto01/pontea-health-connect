@@ -16,6 +16,7 @@ import NotFound from "./pages/NotFound";
 import TreatmentProgram from "./pages/TreatmentProgram";
 import TreatmentQuiz from "./pages/TreatmentQuiz";
 import TreatmentResult from "./pages/TreatmentResult";
+import TreatmentFrequency from "./pages/TreatmentFrequency";
 import TreatmentCheckout from "./pages/TreatmentCheckout";
 import AffiliateDashboardLayout from "./pages/affiliate/AffiliateDashboardLayout";
 import AffiliateOverview from "./pages/affiliate/AffiliateOverview";
@@ -65,6 +66,7 @@ const App = () => (
             <Route path="/tratamento/:slug" element={<TreatmentProgram />} />
             <Route path="/tratamento/:slug/quiz" element={<TreatmentQuiz />} />
             <Route path="/tratamento/:slug/resultado" element={<TreatmentResult />} />
+            <Route path="/tratamento/:slug/frequencia" element={<TreatmentFrequency />} />
             <Route path="/tratamento/:slug/checkout" element={<TreatmentCheckout />} />
           </Route>
           

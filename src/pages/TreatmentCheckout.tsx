@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,39 +9,48 @@ import Cookies from "js-cookie";
 import { toast } from "sonner";
 
 export default function TreatmentCheckout() {
-  const location = useLocation();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { slug } = useParams();
+
+  const qrId = searchParams.get("qr");
+  const productId = searchParams.get("product");
+  const cycle = searchParams.get("cycle") || "monthly";
 
   const [step, setStep] = useState<"checkout" | "processing" | "pix_payment" | "success">("checkout");
   const [cpf, setCpf] = useState("");
   const [patientData, setPatientData] = useState<any>(null);
+  const [productData, setProductData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [paymentMethod, setPaymentMethod] = useState<"pix" | "credit_card">("pix");
   const [pixData, setPixData] = useState<{ qrCode: string; payload: string; orderId: string; value: number } | null>(null);
   const [creditCard, setCreditCard] = useState({ number: "", holderName: "", expiry: "", ccv: "" });
   
-  const { productId, cycle: selectedCycle, price, qrId, address, productName } = location.state || {};
-  const cycle = selectedCycle || "monthly";
+  const [address, setAddress] = useState({
+    cep: "",
+    street: "",
+    number: "",
+    complement: "",
+    city: "",
+    state: "",
+  });
 
   useEffect(() => {
-    if (!location.state || !qrId || !productId) {
+    if (!qrId || !productId) {
       toast.error("Sessão de checkout inválida.");
       navigate(`/tratamento/${slug}`);
       return;
     }
 
-    const fetchQuizData = async () => {
+    const fetchData = async () => {
       try {
-        const { data: quizResponse, error } = await supabase
+        const { data: quizResponse, error: qrError } = await supabase
           .from("quiz_responses")
           .select("patient_name, patient_email, patient_phone, patient_cpf")
           .eq("id", qrId)
           .single();
 
-        if (error || !quizResponse) {
-          throw new Error("Quiz não encontrado");
-        }
+        if (qrError || !quizResponse) throw new Error("Quiz não encontrado");
 
         setPatientData(quizResponse);
         if (quizResponse.patient_cpf) {
@@ -52,6 +61,17 @@ export default function TreatmentCheckout() {
           c = c.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
           setCpf(c);
         }
+
+        const { data: prodData, error: prodError } = await supabase
+          .from("treatment_products")
+          .select("*")
+          .eq("id", productId)
+          .single();
+
+        if (prodError || !prodData) throw new Error("Produto não encontrado");
+        
+        setProductData(prodData);
+
       } catch (err) {
         console.error(err);
         toast.error("Sessão expirada. Por favor refaça o questionário.");
@@ -61,8 +81,8 @@ export default function TreatmentCheckout() {
       }
     };
 
-    fetchQuizData();
-  }, [location.state, navigate, qrId, productId, slug]);
+    fetchData();
+  }, [navigate, qrId, productId, slug]);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -105,9 +125,41 @@ export default function TreatmentCheckout() {
     setCpf(value);
   };
 
+  const handleCepChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value = e.target.value.replace(/\D/g, "");
+    if (value.length > 5) value = value.replace(/^(\d{5})(\d)/, "$1-$2");
+    if (value.length > 9) value = value.substring(0, 9);
+    setAddress({ ...address, cep: value });
+  };
+
+  const getTotalCents = () => {
+    if (!productData) return 0;
+    if (cycle === "semiannual") {
+      return (productData.price_semiannual_cents || productData.price_monthly_cents || 0) * 6;
+    } else if (cycle === "quarterly") {
+      return (productData.price_quarterly_cents || productData.price_monthly_cents || 0) * 3;
+    }
+    return productData.price_monthly_cents || 0;
+  };
+
+  const getMonthlyValueCents = () => {
+    if (!productData) return 0;
+    if (cycle === "semiannual") {
+      return productData.price_semiannual_cents || productData.price_monthly_cents || 0;
+    } else if (cycle === "quarterly") {
+      return productData.price_quarterly_cents || productData.price_monthly_cents || 0;
+    }
+    return productData.price_monthly_cents || 0;
+  };
+
   const handleCheckout = async () => {
     if (cpf.length < 14) {
       toast.error("Por favor, insira um CPF válido.");
+      return;
+    }
+
+    if (!address.cep || !address.street || !address.number || !address.city || !address.state) {
+      toast.error("Por favor, preencha o endereço de entrega completo.");
       return;
     }
 
@@ -132,6 +184,7 @@ export default function TreatmentCheckout() {
         patient_cpf: cpf.replace(/\D/g, ""),
         billing_cycle: cycle,
         payment_method: paymentMethod === "pix" ? "PIX" : "CREDIT_CARD",
+        price_cents: getTotalCents(), // Send total value upfront
         shipping_address: address?.street ? `${address.street}, ${address.number} ${address.complement || ''}`.trim() : undefined,
         shipping_city: address?.city || undefined,
         shipping_state: address?.state || undefined,
@@ -178,7 +231,7 @@ export default function TreatmentCheckout() {
           qrCode: data.pix_qr_code, 
           payload: data.pix_payload, 
           orderId: data.order_id,
-          value: data.value || price
+          value: data.value || (getTotalCents() / 100)
         });
         setStep("pix_payment");
       } else {
@@ -197,8 +250,6 @@ export default function TreatmentCheckout() {
     }
   };
 
-  if (!location.state) return null;
-  
   if (loading) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center p-4">
@@ -246,7 +297,7 @@ export default function TreatmentCheckout() {
           </div>
 
           <div className="bg-teal-50 border border-teal-100 rounded-2xl p-6 text-center mb-6">
-            <p className="text-sm text-teal-800 font-medium mb-1">Valor do pedido</p>
+            <p className="text-sm text-teal-800 font-medium mb-1">Valor total a ser cobrado agora</p>
             <p className="text-3xl font-bold text-teal-900">
               {pixData.value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
             </p>
@@ -302,17 +353,23 @@ export default function TreatmentCheckout() {
               <div className="space-y-4 mb-2">
                 <div>
                   <p className="text-sm text-slate-500">Produto</p>
-                  <p className="font-semibold text-slate-900">{productName}</p>
+                  <p className="font-semibold text-slate-900">{productData?.name}</p>
                 </div>
                 <div>
                   <p className="text-sm text-slate-500">Ciclo de faturamento</p>
                   <p className="font-semibold text-slate-900 capitalize">
-                    {cycle === 'monthly' ? 'Mensal' : cycle === 'quarterly' ? 'Trimestral' : 'Semestral'}
+                    {cycle === 'monthly' ? 'Plano Mensal' : cycle === 'quarterly' ? 'Plano Trimestral' : 'Plano Semestral'}
+                  </p>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    ({(getMonthlyValueCents() / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} / mês)
                   </p>
                 </div>
                 <div className="pt-4 border-t border-slate-200 flex justify-between items-center">
-                  <span className="text-slate-600 font-medium">Total a pagar</span>
-                  <span className="font-bold text-2xl text-teal-600">{price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                  <div className="flex flex-col">
+                    <span className="text-slate-600 font-medium text-sm">Valor total a ser</span>
+                    <span className="text-slate-600 font-medium text-sm">cobrado agora</span>
+                  </div>
+                  <span className="font-heading font-bold text-2xl text-teal-600">{(getTotalCents() / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
                 </div>
               </div>
 
@@ -325,7 +382,7 @@ export default function TreatmentCheckout() {
                 >
                   {step === "processing" ? (
                     <><Loader2 className="w-5 h-5 mr-2 animate-spin" />Processando...</>
-                  ) : "Confirmar Pedido"}
+                  ) : `Pagar ${(getTotalCents() / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`}
                 </Button>
               </div>
             </div>
@@ -335,7 +392,7 @@ export default function TreatmentCheckout() {
           <div className="md:col-span-2 md:row-start-1 flex flex-col gap-6">
             
             <div className="bg-white border rounded-2xl p-5 md:p-6 shadow-sm">
-              <h2 className="text-xl font-bold text-slate-900 mb-4">Dados de Pagamento</h2>
+              <h2 className="text-xl font-bold text-slate-900 mb-4">Dados do Paciente</h2>
               <div className="flex flex-col gap-2">
                 <Label className="text-sm font-medium text-slate-600">Seu CPF</Label>
                 <Input 
@@ -346,6 +403,40 @@ export default function TreatmentCheckout() {
                   maxLength={14}
                   className="w-full py-4 px-4 text-lg bg-slate-50 border border-slate-200 rounded-xl min-h-[52px]"
                 />
+              </div>
+            </div>
+
+            <div className="bg-white border rounded-2xl p-5 md:p-6 shadow-sm">
+              <h2 className="text-xl font-bold text-slate-900 mb-4">Endereço de Entrega</h2>
+              <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-1">
+                  <Label className="text-sm font-medium text-slate-600">CEP</Label>
+                  <Input type="tel" placeholder="00000-000" className="w-full py-4 px-4 text-base bg-slate-50 border border-slate-200 rounded-xl min-h-[52px]" value={address.cep} onChange={handleCepChange} maxLength={9} />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <Label className="text-sm font-medium text-slate-600">Rua / Avenida</Label>
+                  <Input className="w-full py-4 px-4 text-base bg-slate-50 border border-slate-200 rounded-xl min-h-[52px]" value={address.street} onChange={(e) => setAddress({...address, street: e.target.value})} />
+                </div>
+                <div className="flex gap-3 w-full">
+                  <div className="flex flex-col gap-1 w-1/3">
+                    <Label className="text-sm font-medium text-slate-600">Número</Label>
+                    <Input type="tel" className="w-full py-4 px-4 text-base bg-slate-50 border border-slate-200 rounded-xl min-h-[52px]" value={address.number} onChange={(e) => setAddress({...address, number: e.target.value})} />
+                  </div>
+                  <div className="flex flex-col gap-1 w-2/3">
+                    <Label className="text-sm font-medium text-slate-600">Complemento</Label>
+                    <Input placeholder="Apto, Bloco..." className="w-full py-4 px-4 text-base bg-slate-50 border border-slate-200 rounded-xl min-h-[52px]" value={address.complement} onChange={(e) => setAddress({...address, complement: e.target.value})} />
+                  </div>
+                </div>
+                <div className="flex gap-3 w-full">
+                  <div className="flex flex-col gap-1 w-2/3">
+                    <Label className="text-sm font-medium text-slate-600">Cidade</Label>
+                    <Input className="w-full py-4 px-4 text-base bg-slate-50 border border-slate-200 rounded-xl min-h-[52px]" value={address.city} onChange={(e) => setAddress({...address, city: e.target.value})} />
+                  </div>
+                  <div className="flex flex-col gap-1 w-1/3">
+                    <Label className="text-sm font-medium text-slate-600">Estado</Label>
+                    <Input placeholder="SP" className="w-full py-4 px-4 text-base bg-slate-50 border border-slate-200 rounded-xl min-h-[52px] text-center uppercase" value={address.state} onChange={(e) => setAddress({...address, state: e.target.value.toUpperCase()})} maxLength={2} />
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -449,7 +540,7 @@ export default function TreatmentCheckout() {
         >
           {step === "processing" ? (
             <><Loader2 className="w-5 h-5 mr-2 animate-spin" />Processando...</>
-          ) : "Confirmar Pedido"}
+          ) : `Pagar ${(getTotalCents() / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`}
         </Button>
       </div>
 

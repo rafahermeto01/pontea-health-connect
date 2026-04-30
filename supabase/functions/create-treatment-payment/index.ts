@@ -16,15 +16,14 @@ serve(async (req) => {
     if (!ASAAS_API_KEY || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) throw new Error("Missing env vars")
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
     const body = await req.json()
-    const { quiz_response_id, product_id, patient_name, patient_email, patient_phone, patient_cpf, billing_cycle, payment_method, credit_card, credit_card_holder, remote_ip, shipping_address, shipping_city, shipping_state, shipping_zip, ref_code } = body
-    if (!quiz_response_id || !product_id || !patient_name || !patient_phone || !patient_cpf || !billing_cycle || !payment_method) throw new Error("Campos obrigatórios faltando")
+    const { quiz_response_id, product_id, patient_name, patient_email, patient_phone, patient_cpf, billing_cycle, payment_method, credit_card, credit_card_holder, remote_ip, shipping_address, shipping_city, shipping_state, shipping_zip, ref_code, price_cents } = body
+    if (!quiz_response_id || !product_id || !patient_name || !patient_phone || !patient_cpf || !billing_cycle || !payment_method || !price_cents) throw new Error("Campos obrigatórios faltando")
     const cpfClean = patient_cpf.replace(/\D/g, "")
     if (cpfClean.length !== 11 && cpfClean.length !== 14) throw new Error("CPF/CNPJ inválido")
     const { data: product, error: prodError } = await supabase.from("treatment_products").select("*").eq("id", product_id).single()
     if (prodError || !product) throw new Error("Produto não encontrado")
-    let priceCents = product.price_monthly_cents
-    if (billing_cycle === "quarterly" && product.price_quarterly_cents) priceCents = product.price_quarterly_cents
-    if (billing_cycle === "semiannual" && product.price_semiannual_cents) priceCents = product.price_semiannual_cents
+    
+    const priceCents = price_cents
     const priceValue = priceCents / 100
     let affiliate_id = null
     let affiliate_commission_cents = 0
