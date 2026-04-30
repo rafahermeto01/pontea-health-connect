@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { CheckCircle, QrCode, CreditCard, Loader2 } from "lucide-react";
+import { CheckCircle, QrCode, CreditCard, Loader2, Copy } from "lucide-react";
 import Cookies from "js-cookie";
 import { toast } from "sonner";
 
@@ -21,7 +21,6 @@ export default function TreatmentCheckout() {
   const [pixData, setPixData] = useState<{ qrCode: string; payload: string; orderId: string; value: number } | null>(null);
   const [creditCard, setCreditCard] = useState({ number: "", holderName: "", expiry: "", ccv: "" });
   
-  // State from previous page
   const { productId, cycle: selectedCycle, price, qrId, address, productName } = location.state || {};
   const cycle = selectedCycle || "monthly";
 
@@ -65,7 +64,6 @@ export default function TreatmentCheckout() {
     fetchQuizData();
   }, [location.state, navigate, qrId, productId, slug]);
 
-  // Polling for PIX payment
   useEffect(() => {
     let interval: NodeJS.Timeout;
     let timeout: NodeJS.Timeout;
@@ -203,7 +201,7 @@ export default function TreatmentCheckout() {
   
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-white flex items-center justify-center p-4">
         <Loader2 className="w-8 h-8 text-teal-600 animate-spin" />
       </div>
     );
@@ -211,50 +209,52 @@ export default function TreatmentCheckout() {
 
   if (step === "pix_payment" && pixData) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-        <div className="bg-white max-w-md w-full p-8 rounded-2xl shadow-sm text-center">
+      <div className="min-h-screen bg-white flex flex-col justify-center px-5 py-8 pb-32">
+        <div className="w-full max-w-md mx-auto">
           <div className="w-16 h-16 bg-teal-100 text-teal-600 rounded-full flex items-center justify-center mx-auto mb-6">
             <QrCode className="w-8 h-8" />
           </div>
-          <h2 className="text-2xl font-bold text-slate-900 mb-2">Pagamento via PIX</h2>
-          <p className="text-slate-600 mb-6">
-            Escaneie o QR Code ou cole o código no app do seu banco
+          <h2 className="text-2xl font-bold text-slate-900 mb-2 text-center">Pague via PIX</h2>
+          <p className="text-slate-600 mb-6 text-center text-sm md:text-base">
+            Escaneie o QR Code ou cole o código no seu banco.
           </p>
           
-          <div className="bg-slate-50 p-4 rounded-xl mb-6">
+          <div className="bg-slate-50 p-6 rounded-2xl mb-6 flex justify-center border border-slate-200">
             <img 
               src={`data:image/png;base64,${pixData.qrCode}`} 
               alt="QR Code PIX" 
-              className="w-64 h-64 mx-auto object-contain mix-blend-multiply" 
+              className="w-56 h-56 md:w-64 md:h-64 object-contain mix-blend-multiply" 
             />
           </div>
 
-          <div className="mb-6">
-            <Label className="text-left block mb-2">Código PIX Copia e Cola</Label>
-            <div className="flex gap-2">
-              <Input value={pixData.payload} readOnly className="bg-slate-50 font-mono text-xs" />
+          <div className="mb-8">
+            <Label className="text-left block mb-2 font-medium text-slate-700">Código PIX Copia e Cola</Label>
+            <div className="flex flex-col gap-3">
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 break-all font-mono text-xs text-slate-600">
+                {pixData.payload}
+              </div>
               <Button 
-                variant="outline" 
+                className="w-full bg-teal-600 hover:bg-teal-700 text-white rounded-xl py-4 min-h-[56px] flex items-center justify-center gap-2 font-semibold"
                 onClick={() => {
                   navigator.clipboard.writeText(pixData.payload);
                   toast.success("Código copiado!");
                 }}
               >
-                Copiar
+                <Copy className="w-5 h-5" /> Copiar Código
               </Button>
             </div>
           </div>
 
-          <div className="bg-teal-50 border border-teal-100 rounded-xl p-4 text-center mb-6">
-            <p className="text-sm text-teal-800 mb-1">Valor do pedido</p>
-            <p className="text-2xl font-bold text-teal-900">
+          <div className="bg-teal-50 border border-teal-100 rounded-2xl p-6 text-center mb-6">
+            <p className="text-sm text-teal-800 font-medium mb-1">Valor do pedido</p>
+            <p className="text-3xl font-bold text-teal-900">
               {pixData.value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
             </p>
           </div>
 
-          <div className="flex items-center justify-center gap-2 text-slate-500 animate-pulse">
-            <Loader2 className="w-4 h-4 animate-spin" />
-            <span className="text-sm font-medium">Aguardando pagamento...</span>
+          <div className="flex items-center justify-center gap-2 text-slate-500 animate-pulse bg-slate-50 py-3 rounded-full">
+            <Loader2 className="w-5 h-5 animate-spin" />
+            <span className="text-sm font-semibold">Aguardando pagamento...</span>
           </div>
         </div>
       </div>
@@ -263,21 +263,21 @@ export default function TreatmentCheckout() {
 
   if (step === "success") {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-        <div className="bg-white max-w-lg w-full p-8 rounded-2xl shadow-sm text-center">
+      <div className="min-h-screen bg-white flex items-center justify-center p-5">
+        <div className="w-full max-w-lg text-center">
           <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
             <CheckCircle className="w-10 h-10" />
           </div>
-          <h2 className="text-3xl font-heading font-bold text-slate-900 mb-4">Pedido realizado com sucesso!</h2>
+          <h2 className="text-3xl font-heading font-bold text-slate-900 mb-4">Pedido realizado!</h2>
           <p className="text-slate-600 mb-6 text-lg">
-            Nosso médico analisará suas respostas em até 24 horas. Você receberá uma notificação por e-mail e WhatsApp com o resultado.
+            Nosso médico analisará suas respostas em até 24 horas. Você receberá uma notificação por e-mail e WhatsApp.
           </p>
-          <div className="bg-teal-50 border border-teal-100 rounded-xl p-4 text-teal-800 text-sm mb-8 text-left">
+          <div className="bg-teal-50 border border-teal-100 rounded-2xl p-5 text-teal-800 text-sm mb-8 text-left">
             <strong>O que acontece agora?</strong><br/>
-            Se o seu tratamento for aprovado pelo médico, a receita será enviada automaticamente para a farmácia e seu tratamento será entregue no conforto da sua casa.
+            Se o tratamento for aprovado pelo médico, a receita será enviada à farmácia e seu pedido entregue no conforto da sua casa.
           </div>
           <Button 
-            className="w-full bg-teal-600 hover:bg-teal-700 text-white rounded-xl py-6 text-lg"
+            className="w-full bg-teal-600 hover:bg-teal-700 text-white rounded-2xl py-4 min-h-[56px] text-lg font-semibold"
             onClick={() => navigate("/")}
           >
             Voltar para o início
@@ -288,117 +288,18 @@ export default function TreatmentCheckout() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 py-12">
-      <div className="container mx-auto px-4 max-w-4xl">
-        <h1 className="font-heading text-3xl font-bold text-slate-900 mb-8">Finalizar Pedido</h1>
+    <div className="min-h-screen bg-white py-6 md:py-12 pb-32">
+      <div className="container mx-auto px-5 md:px-4 max-w-5xl">
+        <h1 className="font-heading text-2xl md:text-3xl font-bold text-slate-900 mb-6 md:mb-8 text-center md:text-left">Finalizar Pedido</h1>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {/* Main Checkout Area */}
-          <div className="md:col-span-2 space-y-6">
-            
-            <div className="bg-white border rounded-2xl p-6">
-              <h2 className="text-xl font-bold text-slate-900 mb-4">Dados de Pagamento</h2>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Seu CPF</Label>
-                  <Input 
-                    placeholder="000.000.000-00" 
-                    value={cpf} 
-                    onChange={handleCpfChange} 
-                    maxLength={14}
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white border rounded-2xl p-6">
-              <h2 className="text-xl font-bold text-slate-900 mb-6">Forma de Pagamento</h2>
-              
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                <button
-                  type="button"
-                  onClick={() => setPaymentMethod("pix")}
-                  className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all ${
-                    paymentMethod === "pix"
-                      ? "border-teal-500 bg-teal-50 text-teal-700"
-                      : "border-slate-200 bg-white hover:border-teal-200 text-slate-600"
-                  }`}
-                >
-                  <QrCode className="w-8 h-8 mb-2" />
-                  <span className="font-semibold text-sm">PIX</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPaymentMethod("credit_card")}
-                  className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all ${
-                    paymentMethod === "credit_card"
-                      ? "border-teal-500 bg-teal-50 text-teal-700"
-                      : "border-slate-200 bg-white hover:border-teal-200 text-slate-600"
-                  }`}
-                >
-                  <CreditCard className="w-8 h-8 mb-2" />
-                  <span className="font-semibold text-sm">Cartão de Crédito</span>
-                </button>
-              </div>
-
-              {paymentMethod === "credit_card" && (
-                <div className="space-y-4 animate-in fade-in slide-in-from-top-4">
-                  <div className="space-y-2">
-                    <Label>Número do Cartão</Label>
-                    <Input 
-                      placeholder="0000 0000 0000 0000" 
-                      value={creditCard.number}
-                      onChange={e => setCreditCard({...creditCard, number: e.target.value})}
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Validade</Label>
-                      <Input 
-                        placeholder="MM/AA" 
-                        value={creditCard.expiry}
-                        onChange={e => setCreditCard({...creditCard, expiry: e.target.value})}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>CVC</Label>
-                      <Input 
-                        placeholder="123" 
-                        value={creditCard.ccv}
-                        onChange={e => setCreditCard({...creditCard, ccv: e.target.value})}
-                        maxLength={4}
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Nome no Cartão</Label>
-                    <Input 
-                      placeholder="Nome como impresso no cartão" 
-                      value={creditCard.holderName}
-                      onChange={e => setCreditCard({...creditCard, holderName: e.target.value})}
-                    />
-                  </div>
-                </div>
-              )}
-
-              {paymentMethod === "pix" && (
-                <div className="text-center p-6 bg-slate-50 rounded-xl border border-dashed border-slate-300 animate-in fade-in slide-in-from-top-4">
-                  <QrCode className="w-12 h-12 text-slate-400 mx-auto mb-2" />
-                  <p className="text-slate-600 text-sm">
-                    Ao confirmar o pedido, o QR Code do PIX será gerado para pagamento.
-                  </p>
-                </div>
-              )}
-            </div>
-
-          </div>
-
-          {/* Sidebar Summary */}
-          <div className="space-y-6">
-            <div className="bg-white border rounded-2xl p-6 sticky top-24">
+        <div className="flex flex-col md:grid md:grid-cols-3 gap-6 md:gap-8">
+          
+          {/* Mobile Order Summary (Top on mobile, Side on desktop) */}
+          <div className="md:col-span-1 md:col-start-3 md:row-start-1">
+            <div className="bg-slate-50 border border-slate-100 rounded-2xl p-5 sticky top-24">
               <h2 className="text-lg font-bold text-slate-900 mb-4">Resumo do Pedido</h2>
               
-              <div className="space-y-4 mb-6">
+              <div className="space-y-4 mb-2">
                 <div>
                   <p className="text-sm text-slate-500">Produto</p>
                   <p className="font-semibold text-slate-900">{productName}</p>
@@ -409,31 +310,149 @@ export default function TreatmentCheckout() {
                     {cycle === 'monthly' ? 'Mensal' : cycle === 'quarterly' ? 'Trimestral' : 'Semestral'}
                   </p>
                 </div>
-                <div className="pt-4 border-t border-slate-100 flex justify-between items-center">
-                  <span className="text-slate-600">Total a pagar</span>
-                  <span className="font-bold text-xl text-teal-600">{price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                <div className="pt-4 border-t border-slate-200 flex justify-between items-center">
+                  <span className="text-slate-600 font-medium">Total a pagar</span>
+                  <span className="font-bold text-2xl text-teal-600">{price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
                 </div>
               </div>
 
-              <Button 
-                className="w-full bg-teal-600 hover:bg-teal-700 text-white rounded-xl py-6 text-lg font-bold"
-                onClick={handleCheckout}
-                disabled={step === "processing"}
-              >
-                {step === "processing" ? (
-                  <>
-                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                    Processando...
-                  </>
-                ) : (
-                  "Confirmar Pedido"
-                )}
-              </Button>
+              {/* Desktop Checkout Button */}
+              <div className="hidden md:block mt-6">
+                <Button 
+                  className="w-full bg-teal-600 hover:bg-teal-700 text-white rounded-xl py-6 text-lg font-bold"
+                  onClick={handleCheckout}
+                  disabled={step === "processing"}
+                >
+                  {step === "processing" ? (
+                    <><Loader2 className="w-5 h-5 mr-2 animate-spin" />Processando...</>
+                  ) : "Confirmar Pedido"}
+                </Button>
+              </div>
             </div>
           </div>
 
+          {/* Main Checkout Area */}
+          <div className="md:col-span-2 md:row-start-1 flex flex-col gap-6">
+            
+            <div className="bg-white border rounded-2xl p-5 md:p-6 shadow-sm">
+              <h2 className="text-xl font-bold text-slate-900 mb-4">Dados de Pagamento</h2>
+              <div className="flex flex-col gap-2">
+                <Label className="text-sm font-medium text-slate-600">Seu CPF</Label>
+                <Input 
+                  type="tel"
+                  placeholder="000.000.000-00" 
+                  value={cpf} 
+                  onChange={handleCpfChange} 
+                  maxLength={14}
+                  className="w-full py-4 px-4 text-lg bg-slate-50 border border-slate-200 rounded-xl min-h-[52px]"
+                />
+              </div>
+            </div>
+
+            <div className="bg-white border rounded-2xl p-5 md:p-6 shadow-sm">
+              <h2 className="text-xl font-bold text-slate-900 mb-4">Forma de Pagamento</h2>
+              
+              <div className="flex flex-col md:grid md:grid-cols-2 gap-3 mb-6">
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod("pix")}
+                  className={`flex items-center justify-start md:flex-col md:justify-center p-4 rounded-2xl border-2 transition-all gap-4 md:gap-2 ${
+                    paymentMethod === "pix"
+                      ? "border-teal-500 bg-teal-50 text-teal-800"
+                      : "border-slate-200 bg-white hover:border-teal-300 text-slate-600"
+                  }`}
+                >
+                  <QrCode className="w-6 h-6 md:w-8 md:h-8 shrink-0" />
+                  <span className="font-semibold text-base md:text-sm">PIX</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod("credit_card")}
+                  className={`flex items-center justify-start md:flex-col md:justify-center p-4 rounded-2xl border-2 transition-all gap-4 md:gap-2 ${
+                    paymentMethod === "credit_card"
+                      ? "border-teal-500 bg-teal-50 text-teal-800"
+                      : "border-slate-200 bg-white hover:border-teal-300 text-slate-600"
+                  }`}
+                >
+                  <CreditCard className="w-6 h-6 md:w-8 md:h-8 shrink-0" />
+                  <span className="font-semibold text-base md:text-sm">Cartão de Crédito</span>
+                </button>
+              </div>
+
+              {paymentMethod === "credit_card" && (
+                <div className="flex flex-col gap-4 animate-in fade-in slide-in-from-top-4">
+                  <div className="flex flex-col gap-2">
+                    <Label className="text-sm font-medium text-slate-600">Número do Cartão</Label>
+                    <Input 
+                      type="tel"
+                      placeholder="0000 0000 0000 0000" 
+                      value={creditCard.number}
+                      onChange={e => setCreditCard({...creditCard, number: e.target.value})}
+                      className="w-full py-4 px-4 text-lg bg-slate-50 border border-slate-200 rounded-xl min-h-[52px]"
+                    />
+                  </div>
+                  <div className="flex gap-4">
+                    <div className="flex flex-col gap-2 flex-1">
+                      <Label className="text-sm font-medium text-slate-600">Validade</Label>
+                      <Input 
+                        type="tel"
+                        placeholder="MM/AA" 
+                        value={creditCard.expiry}
+                        onChange={e => setCreditCard({...creditCard, expiry: e.target.value})}
+                        className="w-full py-4 px-4 text-lg bg-slate-50 border border-slate-200 rounded-xl min-h-[52px] text-center"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-2 flex-1">
+                      <Label className="text-sm font-medium text-slate-600">CVC</Label>
+                      <Input 
+                        type="tel"
+                        placeholder="123" 
+                        value={creditCard.ccv}
+                        onChange={e => setCreditCard({...creditCard, ccv: e.target.value})}
+                        maxLength={4}
+                        className="w-full py-4 px-4 text-lg bg-slate-50 border border-slate-200 rounded-xl min-h-[52px] text-center"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <Label className="text-sm font-medium text-slate-600">Nome impresso no Cartão</Label>
+                    <Input 
+                      placeholder="NOME DO TITULAR" 
+                      value={creditCard.holderName}
+                      onChange={e => setCreditCard({...creditCard, holderName: e.target.value})}
+                      className="w-full py-4 px-4 text-lg bg-slate-50 border border-slate-200 rounded-xl min-h-[52px] uppercase"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {paymentMethod === "pix" && (
+                <div className="text-center p-6 bg-slate-50 rounded-2xl border border-dashed border-slate-300 animate-in fade-in slide-in-from-top-4">
+                  <QrCode className="w-12 h-12 text-slate-400 mx-auto mb-3" />
+                  <p className="text-slate-600 text-sm font-medium">
+                    Ao confirmar o pedido, o QR Code do PIX será gerado para pagamento.
+                  </p>
+                </div>
+              )}
+            </div>
+
+          </div>
         </div>
       </div>
+
+      {/* Mobile Fixed CTA */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-slate-100 shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.05)] z-50">
+        <Button 
+          className="w-full bg-teal-600 hover:bg-teal-700 text-white rounded-2xl py-4 min-h-[56px] text-lg font-semibold"
+          onClick={handleCheckout}
+          disabled={step === "processing"}
+        >
+          {step === "processing" ? (
+            <><Loader2 className="w-5 h-5 mr-2 animate-spin" />Processando...</>
+          ) : "Confirmar Pedido"}
+        </Button>
+      </div>
+
     </div>
   );
 }

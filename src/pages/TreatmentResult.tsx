@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Info, CheckCircle2, ChevronDown, PackageCheck, Stethoscope, PlayCircle } from "lucide-react";
+import { Info, CheckCircle2, PackageCheck, Stethoscope, PlayCircle } from "lucide-react";
 import { toast } from "sonner";
 
 export default function TreatmentResult() {
@@ -38,7 +38,6 @@ export default function TreatmentResult() {
           return;
         }
 
-        // Fetch quiz response to get program_id
         const { data: qrData, error: qrError } = await supabase
           .from("quiz_responses")
           .select("program_id")
@@ -47,7 +46,6 @@ export default function TreatmentResult() {
 
         if (qrError || !qrData) throw new Error("Quiz response not found");
 
-        // Fetch products
         const { data: prodData, error: prodError } = await supabase
           .from("treatment_products")
           .select("*")
@@ -74,7 +72,6 @@ export default function TreatmentResult() {
 
   const selectedProduct = products.find((p) => p.id === selectedProductId);
 
-  // Price calculations based on cycle
   const getCyclePrice = () => {
     if (!selectedProduct) return 0;
     switch (cycle) {
@@ -115,62 +112,61 @@ export default function TreatmentResult() {
   };
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;
+    return <div className="min-h-screen flex items-center justify-center bg-white">Carregando...</div>;
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-24">
+    <div className="min-h-screen bg-white pb-32">
       {/* Top Banner */}
-      <div className="bg-coral-500 bg-rose-500 text-white text-center py-2 px-4 text-sm font-semibold tracking-wide">
+      <div className="w-full bg-rose-500 text-white text-center py-2 text-sm font-semibold tracking-wide">
         🎉 33% de desconto no primeiro pedido!
       </div>
 
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <div className="mb-10 text-center">
-          <h1 className="font-heading text-3xl md:text-4xl font-bold text-slate-900 mb-4">
+      <div className="container mx-auto px-0 md:px-4 py-6 max-w-4xl">
+        <div className="mb-8 text-center px-5">
+          <h1 className="font-heading text-2xl md:text-4xl font-bold text-slate-900 mb-3">
             Plano sugerido para o seu caso
           </h1>
-          <p className="text-slate-600 max-w-2xl mx-auto">
-            O plano será avaliado por um médico para diagnóstico e prescrição do tratamento. Esta é uma sugestão inicial e poderá ser ajustada durante a avaliação médica.
+          <p className="text-slate-600 max-w-2xl mx-auto text-sm md:text-base">
+            O plano será avaliado por um médico para diagnóstico e prescrição. Esta sugestão inicial poderá ser ajustada.
           </p>
         </div>
 
         {/* Disclaimer */}
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 md:p-6 mb-10 flex gap-4">
-          <Info className="text-blue-600 shrink-0 mt-1" />
-          <div className="text-sm text-blue-900 space-y-2">
-            <p><strong>Importante:</strong> Essa é uma sugestão de tratamento, o médico que definirá a sua prescrição.</p>
-            <ul className="list-disc pl-5 space-y-1">
-              <li>O médico poderá alterar os medicamentos após a avaliação.</li>
-              <li>Se o tratamento não for necessário, o pedido será cancelado e você será reembolsado.</li>
-              <li>Os medicamentos são manipulados por farmácias credenciadas pela Anvisa.</li>
+        <div className="mx-4 p-4 bg-amber-50 border border-amber-200 rounded-2xl text-sm text-amber-900 mb-8 flex gap-3 flex-col md:flex-row items-start">
+          <Info className="text-amber-600 shrink-0 mt-0.5 w-5 h-5" />
+          <div className="space-y-2">
+            <p className="font-semibold">Vale lembrar:</p>
+            <ul className="list-disc pl-4 space-y-1 text-amber-800">
+              <li>O médico definirá a sua prescrição após a avaliação.</li>
+              <li>Se o tratamento não for aprovado, você será totalmente reembolsado.</li>
+              <li>Os medicamentos são manipulados por farmácias certificadas.</li>
             </ul>
           </div>
         </div>
 
         {/* Products */}
-        <div className="space-y-6 mb-10">
-          <h2 className="text-xl font-bold text-slate-900">Medicamentos sugeridos</h2>
+        <div className="space-y-4 mb-8">
+          <h2 className="text-xl font-bold text-slate-900 mx-4">Medicamentos sugeridos</h2>
           {products.map((product) => (
             <div 
               key={product.id} 
-              className={`bg-white border rounded-2xl p-4 md:p-6 cursor-pointer transition-all ${selectedProductId === product.id ? 'border-teal-500 ring-1 ring-teal-500 shadow-md' : 'border-slate-200 hover:border-teal-300'}`}
+              className={`mx-4 p-5 bg-white border rounded-2xl shadow-sm cursor-pointer transition-all flex flex-col items-center text-center md:flex-row md:text-left ${selectedProductId === product.id ? 'border-teal-500 ring-2 ring-teal-500/20 bg-teal-50/20' : 'border-slate-200'}`}
               onClick={() => setSelectedProductId(product.id)}
             >
-              <div className="flex gap-4 md:gap-6">
-                <div className="w-24 h-24 md:w-32 md:h-32 bg-slate-100 rounded-xl flex items-center justify-center shrink-0">
-                  {product.image_url ? (
-                    <img src={product.image_url} alt={product.name} className="w-full h-full object-contain p-2" />
-                  ) : (
-                    <PackageCheck className="w-10 h-10 text-slate-400" />
-                  )}
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-bold text-lg md:text-xl text-slate-900 mb-1">{product.name}</h3>
-                  <p className="text-slate-600 text-sm md:text-base mb-4 line-clamp-2">{product.description}</p>
-                  <div className="flex items-center gap-3">
-                    <span className="font-bold text-lg text-teal-600">{((product.price_monthly_cents || 0) / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}/mês*</span>
-                  </div>
+              <div className="w-20 h-20 bg-slate-50 rounded-xl flex items-center justify-center shrink-0 mb-4 md:mb-0 md:mr-5">
+                {product.image_url ? (
+                  <img src={product.image_url} alt={product.name} className="w-full h-full object-contain p-2 mix-blend-multiply" />
+                ) : (
+                  <PackageCheck className="w-8 h-8 text-slate-400" />
+                )}
+              </div>
+              <div className="flex-1 flex flex-col items-center md:items-start">
+                <h3 className="font-semibold text-lg text-slate-900 mb-1">{product.name}</h3>
+                <p className="text-slate-500 text-sm mb-3 line-clamp-2 px-2 md:px-0">{product.description}</p>
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-xl text-teal-600">{((product.price_monthly_cents || 0) / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}/mês</span>
+                  <span className="text-slate-400 text-sm line-through">{(((product.price_monthly_cents || 0) * 1.5) / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
                 </div>
               </div>
             </div>
@@ -178,51 +174,49 @@ export default function TreatmentResult() {
         </div>
 
         {/* Cycle Selection */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-6 mb-10">
-          <h2 className="text-xl font-bold text-slate-900 mb-6">Resumo do seu tratamento</h2>
-          <RadioGroup value={cycle} onValueChange={setCycle} className="space-y-4">
+        <div className="mx-4 mb-10">
+          <h2 className="text-xl font-bold text-slate-900 mb-4">Resumo do seu tratamento</h2>
+          <RadioGroup value={cycle} onValueChange={setCycle} className="flex flex-col gap-3">
             
             {selectedProduct?.price_quarterly_cents && (
-              <Label htmlFor="quarterly" className={`flex flex-col md:flex-row md:items-center justify-between p-4 border rounded-xl cursor-pointer transition-colors ${cycle === 'quarterly' ? 'bg-teal-50 border-teal-500' : 'hover:bg-slate-50'}`}>
-                <div className="flex items-center gap-3 mb-2 md:mb-0">
-                  <RadioGroupItem value="quarterly" id="quarterly" />
-                  <div>
-                    <span className="font-semibold text-slate-900 block">Plano Trimestral</span>
-                    <span className="text-sm text-slate-500">Cobrado a cada 3 meses</span>
+              <Label htmlFor="quarterly" className={`p-4 border-2 rounded-2xl cursor-pointer transition-all flex flex-col gap-2 ${cycle === 'quarterly' ? 'border-teal-500 bg-teal-50' : 'border-slate-200 bg-white'}`}>
+                <div className="flex items-start gap-3 w-full">
+                  <RadioGroupItem value="quarterly" id="quarterly" className="mt-1 shrink-0" />
+                  <div className="flex-1">
+                    <div className="flex justify-between items-center w-full mb-1">
+                      <span className="font-semibold text-slate-900 text-base">Plano Trimestral</span>
+                      <span className="inline-flex bg-teal-600 text-white text-[10px] uppercase font-bold px-2 py-0.5 rounded-full">Recomendado</span>
+                    </div>
+                    <span className="text-sm text-slate-500 block mb-2">Cobrado a cada 3 meses</span>
+                    <span className="font-bold text-lg text-slate-900">{((selectedProduct.price_quarterly_cents || 0) / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} <span className="text-sm font-normal text-slate-500">/mês</span></span>
                   </div>
-                </div>
-                <div className="text-left md:text-right">
-                  <span className="font-bold text-lg text-slate-900 block">{((selectedProduct.price_quarterly_cents || 0) / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} <span className="text-sm font-normal text-slate-500">/mês</span></span>
-                  <span className="inline-block bg-teal-100 text-teal-800 text-xs font-semibold px-2 py-1 rounded">Maior custo-benefício</span>
                 </div>
               </Label>
             )}
 
-            <Label htmlFor="monthly" className={`flex flex-col md:flex-row md:items-center justify-between p-4 border rounded-xl cursor-pointer transition-colors ${cycle === 'monthly' ? 'bg-teal-50 border-teal-500' : 'hover:bg-slate-50'}`}>
-              <div className="flex items-center gap-3 mb-2 md:mb-0">
-                <RadioGroupItem value="monthly" id="monthly" />
-                <div>
-                  <span className="font-semibold text-slate-900 block">Plano Mensal</span>
-                  <span className="text-sm text-slate-500">Cobrado mensalmente</span>
+            <Label htmlFor="monthly" className={`p-4 border-2 rounded-2xl cursor-pointer transition-all flex flex-col gap-2 ${cycle === 'monthly' ? 'border-teal-500 bg-teal-50' : 'border-slate-200 bg-white'}`}>
+              <div className="flex items-start gap-3 w-full">
+                <RadioGroupItem value="monthly" id="monthly" className="mt-1 shrink-0" />
+                <div className="flex-1">
+                  <span className="font-semibold text-slate-900 text-base block mb-1">Plano Mensal</span>
+                  <span className="text-sm text-slate-500 block mb-2">Cobrado mensalmente</span>
+                  <span className="font-bold text-lg text-slate-900">{((selectedProduct?.price_monthly_cents || 0) / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} <span className="text-sm font-normal text-slate-500">/mês</span></span>
                 </div>
-              </div>
-              <div className="text-left md:text-right">
-                <span className="font-bold text-lg text-slate-900 block">{((selectedProduct?.price_monthly_cents || 0) / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} <span className="text-sm font-normal text-slate-500">/mês</span></span>
               </div>
             </Label>
 
             {selectedProduct?.price_semiannual_cents && (
-              <Label htmlFor="semiannual" className={`flex flex-col md:flex-row md:items-center justify-between p-4 border rounded-xl cursor-pointer transition-colors ${cycle === 'semiannual' ? 'bg-teal-50 border-teal-500' : 'hover:bg-slate-50'}`}>
-                <div className="flex items-center gap-3 mb-2 md:mb-0">
-                  <RadioGroupItem value="semiannual" id="semiannual" />
-                  <div>
-                    <span className="font-semibold text-slate-900 block">Plano Semestral</span>
-                    <span className="text-sm text-slate-500">Cobrado a cada 6 meses</span>
+              <Label htmlFor="semiannual" className={`p-4 border-2 rounded-2xl cursor-pointer transition-all flex flex-col gap-2 ${cycle === 'semiannual' ? 'border-teal-500 bg-teal-50' : 'border-slate-200 bg-white'}`}>
+                <div className="flex items-start gap-3 w-full">
+                  <RadioGroupItem value="semiannual" id="semiannual" className="mt-1 shrink-0" />
+                  <div className="flex-1">
+                    <div className="flex justify-between items-center w-full mb-1">
+                      <span className="font-semibold text-slate-900 text-base">Plano Semestral</span>
+                      <span className="inline-flex bg-green-100 text-green-800 text-[10px] uppercase font-bold px-2 py-0.5 rounded-full">Maior Economia</span>
+                    </div>
+                    <span className="text-sm text-slate-500 block mb-2">Cobrado a cada 6 meses</span>
+                    <span className="font-bold text-lg text-slate-900">{((selectedProduct.price_semiannual_cents || 0) / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} <span className="text-sm font-normal text-slate-500">/mês</span></span>
                   </div>
-                </div>
-                <div className="text-left md:text-right">
-                  <span className="font-bold text-lg text-slate-900 block">{((selectedProduct.price_semiannual_cents || 0) / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} <span className="text-sm font-normal text-slate-500">/mês</span></span>
-                  <span className="inline-block bg-teal-100 text-teal-800 text-xs font-semibold px-2 py-1 rounded">Maior economia</span>
                 </div>
               </Label>
             )}
@@ -231,103 +225,73 @@ export default function TreatmentResult() {
         </div>
 
         {/* Shipping Address */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-6 mb-10">
-          <h2 className="text-xl font-bold text-slate-900 mb-6">Endereço de entrega</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>CEP</Label>
-              <Input placeholder="00000-000" value={address.cep} onChange={handleCepChange} maxLength={9} />
+        <div className="mx-4 mb-12">
+          <h2 className="text-xl font-bold text-slate-900 mb-4">Endereço de entrega</h2>
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-1">
+              <Label className="text-sm font-medium text-slate-600">CEP</Label>
+              <Input type="tel" placeholder="00000-000" className="w-full py-4 px-4 text-base bg-slate-50 border border-slate-200 rounded-xl min-h-[52px]" value={address.cep} onChange={handleCepChange} maxLength={9} />
             </div>
-            <div className="space-y-2 md:col-span-2">
-              <Label>Rua / Avenida</Label>
-              <Input value={address.street} onChange={(e) => setAddress({...address, street: e.target.value})} />
+            <div className="flex flex-col gap-1">
+              <Label className="text-sm font-medium text-slate-600">Rua / Avenida</Label>
+              <Input className="w-full py-4 px-4 text-base bg-slate-50 border border-slate-200 rounded-xl min-h-[52px]" value={address.street} onChange={(e) => setAddress({...address, street: e.target.value})} />
             </div>
-            <div className="space-y-2">
-              <Label>Número</Label>
-              <Input value={address.number} onChange={(e) => setAddress({...address, number: e.target.value})} />
+            <div className="flex gap-3 w-full">
+              <div className="flex flex-col gap-1 w-1/3">
+                <Label className="text-sm font-medium text-slate-600">Número</Label>
+                <Input type="tel" className="w-full py-4 px-4 text-base bg-slate-50 border border-slate-200 rounded-xl min-h-[52px]" value={address.number} onChange={(e) => setAddress({...address, number: e.target.value})} />
+              </div>
+              <div className="flex flex-col gap-1 w-2/3">
+                <Label className="text-sm font-medium text-slate-600">Complemento</Label>
+                <Input placeholder="Apto, Bloco..." className="w-full py-4 px-4 text-base bg-slate-50 border border-slate-200 rounded-xl min-h-[52px]" value={address.complement} onChange={(e) => setAddress({...address, complement: e.target.value})} />
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label>Complemento</Label>
-              <Input placeholder="Apto, Bloco..." value={address.complement} onChange={(e) => setAddress({...address, complement: e.target.value})} />
-            </div>
-            <div className="space-y-2">
-              <Label>Cidade</Label>
-              <Input value={address.city} onChange={(e) => setAddress({...address, city: e.target.value})} />
-            </div>
-            <div className="space-y-2">
-              <Label>Estado (UF)</Label>
-              <Input placeholder="SP" value={address.state} onChange={(e) => setAddress({...address, state: e.target.value})} maxLength={2} />
+            <div className="flex gap-3 w-full">
+              <div className="flex flex-col gap-1 w-2/3">
+                <Label className="text-sm font-medium text-slate-600">Cidade</Label>
+                <Input className="w-full py-4 px-4 text-base bg-slate-50 border border-slate-200 rounded-xl min-h-[52px]" value={address.city} onChange={(e) => setAddress({...address, city: e.target.value})} />
+              </div>
+              <div className="flex flex-col gap-1 w-1/3">
+                <Label className="text-sm font-medium text-slate-600">Estado</Label>
+                <Input placeholder="SP" className="w-full py-4 px-4 text-base bg-slate-50 border border-slate-200 rounded-xl min-h-[52px] text-center uppercase" value={address.state} onChange={(e) => setAddress({...address, state: e.target.value.toUpperCase()})} maxLength={2} />
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Fixed Bottom CTA for Mobile / Inline for Desktop */}
-        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-slate-200 z-50 md:static md:bg-transparent md:border-none md:p-0">
+        {/* Next Steps */}
+        <div className="mx-4 mb-8">
+          <h2 className="text-lg font-bold text-slate-900 mb-4">Próximos passos</h2>
+          <div className="flex flex-col gap-4">
+            <div className="bg-slate-50 p-4 rounded-2xl flex items-center gap-4">
+              <div className="w-10 h-10 bg-teal-100 text-teal-600 rounded-full flex items-center justify-center shrink-0">
+                <Stethoscope className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-slate-900 text-sm">Avaliação médica</h3>
+                <p className="text-xs text-slate-600">Um especialista avaliará seu perfil.</p>
+              </div>
+            </div>
+            <div className="bg-slate-50 p-4 rounded-2xl flex items-center gap-4">
+              <div className="w-10 h-10 bg-teal-100 text-teal-600 rounded-full flex items-center justify-center shrink-0">
+                <PackageCheck className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-slate-900 text-sm">Receba em casa</h3>
+                <p className="text-xs text-slate-600">Tratamento entregue com descrição.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Fixed Bottom CTA for Mobile */}
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-slate-100 shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.05)] z-50 md:static md:shadow-none md:border-none md:p-0 md:mx-4">
           <Button 
-            className="w-full bg-teal-600 hover:bg-teal-700 text-white rounded-xl py-6 text-lg font-bold shadow-lg md:shadow-none"
+            className="w-full bg-teal-600 hover:bg-teal-700 text-white rounded-2xl py-4 min-h-[56px] text-lg font-semibold"
             onClick={handleStartTreatment}
           >
             Iniciar tratamento — {getCyclePrice().toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}/mês
           </Button>
-        </div>
-
-        {/* Next Steps */}
-        <div className="py-12">
-          <h2 className="text-2xl font-bold text-slate-900 mb-8 text-center">Próximos passos</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-white p-6 rounded-2xl border text-center">
-              <div className="w-12 h-12 bg-teal-100 text-teal-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <CheckCircle2 />
-              </div>
-              <h3 className="font-bold text-slate-900 mb-2">Plano de tratamento</h3>
-              <p className="text-sm text-slate-600">Revise e adquira a sugestão inicial de plano para o seu caso.</p>
-            </div>
-            <div className="bg-white p-6 rounded-2xl border text-center">
-              <div className="w-12 h-12 bg-teal-100 text-teal-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Stethoscope />
-              </div>
-              <h3 className="font-bold text-slate-900 mb-2">Avaliação médica</h3>
-              <p className="text-sm text-slate-600">Um médico especialista avaliará detalhadamente suas informações.</p>
-            </div>
-            <div className="bg-white p-6 rounded-2xl border text-center">
-              <div className="w-12 h-12 bg-teal-100 text-teal-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <PlayCircle />
-              </div>
-              <h3 className="font-bold text-slate-900 mb-2">Inicie o tratamento</h3>
-              <p className="text-sm text-slate-600">O médico garantirá a melhor prescrição e você recebe o tratamento em casa.</p>
-            </div>
-          </div>
-        </div>
-
-        {/* FAQ */}
-        <div className="pb-12">
-          <h2 className="text-2xl font-bold text-slate-900 mb-6 text-center">Dúvidas Frequentes</h2>
-          <Accordion type="single" collapsible className="w-full bg-white border rounded-2xl p-2">
-            <AccordionItem value="item-1">
-              <AccordionTrigger className="px-4 font-semibold">Como é o tratamento?</AccordionTrigger>
-              <AccordionContent className="px-4 text-slate-600">
-                O tratamento envolve o uso de medicamentos prescritos pelo seu médico, acompanhado de orientações sobre estilo de vida. O acompanhamento é contínuo para garantir os melhores resultados.
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="item-2">
-              <AccordionTrigger className="px-4 font-semibold">Como funciona a prescrição?</AccordionTrigger>
-              <AccordionContent className="px-4 text-slate-600">
-                A prescrição é feita após a análise do seu questionário por um médico. Caso aprovado, a receita é gerada eletronicamente e encaminhada para a farmácia parceira.
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="item-3">
-              <AccordionTrigger className="px-4 font-semibold">Por que um plano recorrente?</AccordionTrigger>
-              <AccordionContent className="px-4 text-slate-600">
-                Tratamentos médicos muitas vezes exigem consistência. O plano recorrente garante que você não fique sem a medicação, recebendo-a no conforto da sua casa antes que a anterior acabe.
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="item-4">
-              <AccordionTrigger className="px-4 font-semibold">Como é feita a entrega?</AccordionTrigger>
-              <AccordionContent className="px-4 text-slate-600">
-                A entrega é feita por transportadoras parceiras em embalagem discreta. Medicamentos que exigem controle de temperatura são enviados em embalagens térmicas especiais.
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
         </div>
 
       </div>
