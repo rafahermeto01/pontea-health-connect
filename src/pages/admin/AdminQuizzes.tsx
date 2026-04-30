@@ -136,22 +136,27 @@ export default function AdminQuizzes() {
   };
 
   const calculateBMI = (answers: any) => {
-    let weight = 0;
-    let height = 0;
-    
+    let pesoQuestionId = "";
+    let alturaQuestionId = "";
+
     if (typeof answers === 'object' && answers !== null) {
-      Object.entries(answers).forEach(([key, val]) => {
-        const strVal = String(val).toLowerCase();
-        if (key.includes("peso") || strVal.includes("kg")) {
-           const num = parseFloat(strVal.replace(/[^0-9.]/g, ''));
-           if (num) weight = num;
+      Object.keys(answers).forEach((key) => {
+        const questionText = (questionMap[key] || "").toLowerCase();
+        const strVal = String(answers[key]).toLowerCase();
+        
+        if (questionText.includes("peso") || strVal.includes("kg") || key.toLowerCase().includes("peso")) {
+          pesoQuestionId = key;
         }
-        if (key.includes("altura") || strVal.includes("cm") || strVal.includes("m")) {
-           const num = parseFloat(strVal.replace(/[^0-9.]/g, ''));
-           if (num) height = num; // Altura em centímetros
+        if (questionText.includes("altura") || strVal.includes("cm") || key.toLowerCase().includes("altura")) {
+          alturaQuestionId = key;
         }
       });
     }
+
+    const weight = parseFloat(String(answers[pesoQuestionId]).replace(',', '.')) || 0;
+    const height = parseFloat(String(answers[alturaQuestionId]).replace(',', '.')) || 0;
+    
+    console.log('Peso:', weight, 'Altura:', height, 'Tipos:', typeof weight, typeof height);
 
     if (weight > 0 && height > 0) {
       const alturaMetros = height / 100;
