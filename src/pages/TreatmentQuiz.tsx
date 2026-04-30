@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { AlertTriangle, ArrowLeft, CheckCircle } from "lucide-react";
+import { AlertTriangle, ArrowLeft, CheckCircle, Info, Star, User, Sparkles, Package } from "lucide-react";
 import { toast } from "sonner";
 
 export default function TreatmentQuiz() {
@@ -14,10 +14,11 @@ export default function TreatmentQuiz() {
 
   const [loading, setLoading] = useState(true);
   const [program, setProgram] = useState<any>(null);
-  const [questions, setQuestions] = useState<any[]>([]);
+  
+  const [quizFlow, setQuizFlow] = useState<any[]>([]);
 
-  const [step, setStep] = useState<"personal_info" | "quiz" | "eliminated" | "submitting">("personal_info");
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [step, setStep] = useState<"personal_info" | "quiz" | "eliminated" | "submitting" | "beautiful_loading">("personal_info");
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
 
   // Personal Info State
   const [personalInfo, setPersonalInfo] = useState({
@@ -35,6 +36,10 @@ export default function TreatmentQuiz() {
   // Answers State
   const [answers, setAnswers] = useState<Record<string, any>>({});
   const [tempAnswer, setTempAnswer] = useState<any>("");
+  
+  // Loading State
+  const [finalResponseId, setFinalResponseId] = useState<string>("");
+  const [loadingText, setLoadingText] = useState("Analisando suas respostas...");
 
   useEffect(() => {
     const fetchProgramAndQuestions = async () => {
@@ -55,7 +60,22 @@ export default function TreatmentQuiz() {
           .order("sort_order");
 
         if (questError) throw questError;
-        setQuestions(questData || []);
+        
+        const qData = questData || [];
+        const flow: any[] = [];
+        
+        qData.forEach((q, index) => {
+          flow.push({ type: 'question', data: q });
+          if (index === 2) {
+            flow.push({ type: 'interstitial', id: 'int-1' });
+          } else if (index === 15) {
+            flow.push({ type: 'interstitial', id: 'int-2' });
+          } else if (index === 21) {
+            flow.push({ type: 'interstitial', id: 'int-3' });
+          }
+        });
+        
+        setQuizFlow(flow);
       } catch (error) {
         console.error("Error fetching quiz data:", error);
         toast.error("Erro ao carregar o questionário.");
@@ -67,6 +87,30 @@ export default function TreatmentQuiz() {
 
     if (slug) fetchProgramAndQuestions();
   }, [slug, navigate]);
+
+  useEffect(() => {
+    if (step === "beautiful_loading" && finalResponseId) {
+      const messages = [
+        "Analisando suas respostas...",
+        "Buscando o melhor tratamento...",
+        "Quase pronto..."
+      ];
+      let i = 0;
+      const interval = setInterval(() => {
+        i = (i + 1) % messages.length;
+        setLoadingText(messages[i]);
+      }, 1300);
+
+      const timer = setTimeout(() => {
+        navigate(`/tratamento/${slug}/resultado?qr=${finalResponseId}`);
+      }, 4000);
+
+      return () => {
+        clearInterval(interval);
+        clearTimeout(timer);
+      };
+    }
+  }, [step, finalResponseId, navigate, slug]);
 
   const handleStartQuiz = (e: React.FormEvent) => {
     e.preventDefault();
@@ -112,37 +156,50 @@ export default function TreatmentQuiz() {
     setStep("quiz");
   };
 
-  const currentQuestion = questions[currentQuestionIndex];
+  const currentStepObj = quizFlow[currentStepIndex];
 
   useEffect(() => {
-    if (step === "quiz" && currentQuestion) {
-      const existingAnswer = answers[currentQuestion.id];
-      if (currentQuestion.question_type === "multiple_choice") {
+    if (step === "quiz" && currentStepObj?.type === "question") {
+      const q = currentStepObj.data;
+      const existingAnswer = answers[q.id];
+      if (q.question_type === "multiple_choice") {
         setTempAnswer(existingAnswer || []);
-      } else if (currentQuestion.question_type === "scale") {
+      } else if (q.question_type === "scale") {
         setTempAnswer(existingAnswer || 5);
       } else {
         setTempAnswer(existingAnswer || "");
       }
     }
-  }, [currentQuestionIndex, step, answers, currentQuestion]);
+  }, [currentStepIndex, step, answers, currentStepObj]);
 
   const handleNext = async (answerValue: any) => {
-    const newAnswers = { ...answers, [currentQuestion.id]: answerValue };
-    setAnswers(newAnswers);
+    let finalAnswers = answers;
+    
+    if (currentStepObj.type === "question") {
+      const q = currentStepObj.data;
+      finalAnswers = { ...answers, [q.id]: answerValue };
+      setAnswers(finalAnswers);
 
-    if (currentQuestion.is_eliminatory) {
-      if (String(answerValue).toLowerCase() === String(currentQuestion.eliminatory_answer).toLowerCase()) {
-        setStep("eliminated");
-        return;
+      if (q.is_eliminatory) {
+        if (String(answerValue).toLowerCase() === String(q.eliminatory_answer).toLowerCase()) {
+          setStep("eliminated");
+          return;
+        }
       }
     }
 
-    if (currentQuestionIndex < questions.length - 1) {
-      setCurrentQuestionIndex((prev) => prev + 1);
+    if (currentStepIndex < quizFlow.length - 1) {
+      setCurrentStepIndex((prev) => prev + 1);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
-      submitQuiz(newAnswers);
+      submitQuiz(finalAnswers);
+    }
+  };
+
+  const handleInterstitialNext = () => {
+    if (currentStepIndex < quizFlow.length - 1) {
+      setCurrentStepIndex((prev) => prev + 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
@@ -163,8 +220,8 @@ export default function TreatmentQuiz() {
   };
 
   const handleBack = () => {
-    if (currentQuestionIndex > 0) {
-      setCurrentQuestionIndex((prev) => prev - 1);
+    if (currentStepIndex > 0) {
+      setCurrentStepIndex((prev) => prev - 1);
     } else {
       setStep("personal_info");
     }
@@ -193,7 +250,8 @@ export default function TreatmentQuiz() {
 
       if (error) throw error;
 
-      navigate(`/tratamento/${slug}/resultado?qr=${data.id}`);
+      setFinalResponseId(data.id);
+      setStep("beautiful_loading");
     } catch (error) {
       console.error("Submit error:", error);
       toast.error("Erro ao enviar respostas. Tente novamente.");
@@ -211,15 +269,44 @@ export default function TreatmentQuiz() {
         <div className="w-20 h-20 bg-teal-100 text-teal-600 rounded-full flex items-center justify-center mx-auto mb-6">
           <CheckCircle className="w-10 h-10" />
         </div>
-        <h2 className="text-2xl font-bold text-slate-900 mb-4">Tudo pronto!</h2>
-        <p className="text-slate-600 mb-8 text-center text-lg">Vamos analisar suas respostas e recomendar o melhor tratamento para você.</p>
+        <h2 className="text-2xl font-bold text-slate-900 mb-4">Finalizando avaliação...</h2>
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600 mx-auto mb-8"></div>
-        <Button 
-          className="w-full bg-teal-600 text-white rounded-2xl py-4 text-lg font-semibold opacity-50 cursor-not-allowed"
-          disabled
-        >
-          Ver meu tratamento
-        </Button>
+      </div>
+    );
+  }
+
+  if (step === "beautiful_loading") {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-teal-50 to-rose-50 px-6">
+        <div className="w-full max-w-md mx-auto text-center">
+          <div className="w-16 h-16 text-teal-600 mx-auto mb-8 animate-bounce">
+            <Package className="w-full h-full" />
+          </div>
+          
+          <h2 className="font-heading text-2xl font-bold text-slate-900 text-center mb-10 leading-relaxed">
+            Hora de conhecer o plano Pontea que mais se adequa ao seu perfil.
+          </h2>
+          
+          <div className="w-64 mx-auto h-2 rounded-full bg-slate-200 mb-4 overflow-hidden relative">
+            <div 
+              className="bg-teal-500 h-full rounded-full absolute left-0 top-0"
+              style={{
+                animation: 'fillProgress 4s ease-in-out forwards',
+              }}
+            ></div>
+          </div>
+          
+          <p className="text-sm font-medium text-slate-500 min-h-[20px] animate-pulse transition-opacity">
+            {loadingText}
+          </p>
+
+          <style>{`
+            @keyframes fillProgress {
+              0% { width: 0%; }
+              100% { width: 100%; }
+            }
+          `}</style>
+        </div>
       </div>
     );
   }
@@ -233,7 +320,7 @@ export default function TreatmentQuiz() {
           </div>
           <h2 className="text-2xl font-bold text-slate-900 mb-4">Não elegível</h2>
           <p className="text-slate-600 mb-6">
-            {currentQuestion?.eliminatory_message || "Recomendamos que você agende uma consulta presencial com um endocrinologista."}
+            Recomendamos que você agende uma consulta presencial com um endocrinologista.
           </p>
           <Button
             className="w-full bg-teal-600 hover:bg-teal-700 text-white rounded-xl py-6 text-lg min-h-[56px]"
@@ -353,24 +440,15 @@ export default function TreatmentQuiz() {
     );
   }
 
-  // Quiz Step
-  const isLastQuestion = currentQuestionIndex === questions.length - 1;
-  const progressPercentage = ((currentQuestionIndex) / questions.length) * 100;
-
-  let options: string[] = [];
-  try {
-    if (typeof currentQuestion.options === 'string') {
-      options = JSON.parse(currentQuestion.options);
-    } else if (Array.isArray(currentQuestion.options)) {
-      options = currentQuestion.options;
-    }
-  } catch (e) {
-    options = [];
-  }
+  // Quiz & Interstitials Layout
+  const totalQuestions = quizFlow.filter(item => item.type === "question").length;
+  const currentQuestionNumber = quizFlow.slice(0, currentStepIndex + 1).filter(item => item.type === "question").length;
+  const progressPercentage = (currentQuestionNumber / totalQuestions) * 100;
+  const isLastQuestion = currentQuestionNumber === totalQuestions;
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
-      {/* Header & Progress */}
+      {/* Header & Progress (Only show progress if it's a question, or keep it frozen if interstitial) */}
       <header className="fixed top-0 left-0 right-0 bg-white z-50 flex flex-col">
         <div className="w-full bg-slate-100 h-1.5">
           <div
@@ -379,7 +457,7 @@ export default function TreatmentQuiz() {
           ></div>
         </div>
         <div className="text-xs text-slate-400 text-center py-2 bg-white relative">
-          {currentQuestionIndex > 0 && (
+          {currentStepIndex > 0 && (
             <button 
               onClick={handleBack} 
               className="absolute left-4 top-1/2 -translate-y-1/2 p-2 text-slate-400 active:scale-95 transition-transform"
@@ -387,174 +465,303 @@ export default function TreatmentQuiz() {
               <ArrowLeft className="w-5 h-5" />
             </button>
           )}
-          Pergunta {currentQuestionIndex + 1} de {questions.length}
+          {currentStepObj.type === "question" ? `Pergunta ${currentQuestionNumber} de ${totalQuestions}` : `Quase lá!`}
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col justify-center w-full px-5 pt-16 pb-24 animate-in fade-in slide-in-from-right-4 duration-300">
-        <div className="w-full max-w-2xl mx-auto min-h-[calc(100vh-120px)] flex flex-col justify-center">
-          <h2 className="font-heading text-xl md:text-2xl font-bold text-slate-900 text-center mb-8 px-2 leading-relaxed">
-            {currentQuestion?.question_text}
-          </h2>
+      <main className="flex-1 flex flex-col justify-center w-full px-6 pt-16 pb-24 animate-in fade-in slide-in-from-right-4 duration-300">
+        
+        {/* INTERSTITIAL 1 */}
+        {currentStepObj.type === "interstitial" && currentStepObj.id === "int-1" && (
+          <div className="w-full max-w-md mx-auto min-h-[calc(100vh-140px)] flex flex-col justify-center">
+            <div className="text-center mb-8">
+              <h2 className="font-heading text-2xl font-bold text-slate-900 mb-2">
+                Evolução de verdade com
+              </h2>
+              <span className="bg-teal-100 text-teal-800 px-3 py-1 rounded-lg inline-block font-bold text-xl">
+                suporte médico contínuo
+              </span>
+            </div>
 
-          <div className="w-full">
-            {/* SINGLE CHOICE */}
-            {currentQuestion?.question_type === "single_choice" && (
-              <div className="flex flex-col gap-3 w-full">
-                {options.map((opt: string, idx: number) => {
-                  const isSelected = tempAnswer === opt;
-                  return (
-                    <button
-                      key={idx}
-                      onClick={() => handleSingleChoice(opt)}
-                      className={`w-full py-4 px-5 text-left text-base rounded-2xl active:scale-[0.98] transition-all duration-200 border-2 ${
-                        isSelected
-                          ? "border-teal-500 bg-teal-50"
-                          : "border-slate-200 bg-white"
-                      }`}
-                    >
-                      <span className="font-medium text-slate-800">{opt}</span>
-                    </button>
-                  );
-                })}
+            <div className="bg-teal-50 rounded-2xl p-5 mb-4 flex items-center gap-4">
+              <span className="font-heading text-4xl font-extrabold text-teal-600">53%</span>
+              <p className="text-slate-600 text-sm leading-tight">mais chances de resultados do que somente com medicação¹</p>
+            </div>
+
+            <div className="bg-teal-50 rounded-2xl p-5 mb-8 flex items-center gap-4">
+              <span className="font-heading text-4xl font-extrabold text-teal-600">92%</span>
+              <p className="text-slate-600 text-sm leading-tight">estão confiantes de que irão manter o peso conquistado²</p>
+            </div>
+
+            <div className="flex items-center gap-3 mb-8 bg-slate-50 p-4 rounded-xl border border-slate-100">
+              <div className="flex -space-x-3 shrink-0">
+                <div className="w-8 h-8 rounded-full bg-blue-100 border-2 border-white flex items-center justify-center text-xs font-bold text-blue-700">AB</div>
+                <div className="w-8 h-8 rounded-full bg-rose-100 border-2 border-white flex items-center justify-center text-xs font-bold text-rose-700">MC</div>
+                <div className="w-8 h-8 rounded-full bg-amber-100 border-2 border-white flex items-center justify-center text-xs font-bold text-amber-700">RL</div>
               </div>
-            )}
+              <p className="font-semibold text-slate-800 text-sm leading-tight">
+                Junte-se a mais de 10.000 pessoas emagrecendo com a Pontea
+              </p>
+            </div>
 
-            {/* YES/NO */}
-            {currentQuestion?.question_type === "yes_no" && (
-              <div className="flex gap-4 w-full">
-                {["Sim", "Não"].map((opt) => {
-                  const isSelected = tempAnswer === opt;
-                  return (
-                    <button
-                      key={opt}
-                      onClick={() => handleSingleChoice(opt)}
-                      className={`flex-1 py-6 text-center text-lg font-semibold rounded-2xl active:scale-[0.98] transition-all duration-200 border-2 ${
-                        isSelected
-                          ? "border-teal-500 bg-teal-50"
-                          : "border-slate-200 bg-white"
-                      }`}
-                    >
-                      {opt}
-                    </button>
-                  );
-                })}
+            <div className="space-y-1 mt-auto">
+              <p className="text-xs text-slate-400">¹Em um estudo realizado com 57.975 participantes.</p>
+              <p className="text-xs text-slate-400">²Em uma pesquisa de atendimento ao cliente com 300 assinantes ao longo de 6 meses.</p>
+            </div>
+
+            <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-md border-t border-slate-100 z-50 md:static md:bg-transparent md:border-none md:p-0 md:mt-8">
+              <Button 
+                className="w-full bg-teal-600 hover:bg-teal-700 text-white rounded-2xl py-4 min-h-[56px] text-lg font-semibold"
+                onClick={handleInterstitialNext}
+              >
+                Continuar
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* INTERSTITIAL 2 */}
+        {currentStepObj.type === "interstitial" && currentStepObj.id === "int-2" && (
+          <div className="w-full max-w-md mx-auto min-h-[calc(100vh-140px)] flex flex-col justify-center">
+            <h2 className="font-heading text-2xl font-bold text-slate-900 text-center mb-6 leading-tight">
+              Veja como a Pontea transformou a vida de muitas pessoas
+            </h2>
+            
+            <div className="flex justify-center gap-1 mb-8 text-amber-400">
+              <Star className="w-6 h-6 fill-amber-400" />
+              <Star className="w-6 h-6 fill-amber-400" />
+              <Star className="w-6 h-6 fill-amber-400" />
+              <Star className="w-6 h-6 fill-amber-400" />
+              <Star className="w-6 h-6 fill-amber-400" />
+            </div>
+
+            <div className="flex gap-4 items-center justify-center mb-10">
+              <div className="bg-teal-50 rounded-xl p-5 text-center flex-1">
+                <span className="font-heading text-3xl font-extrabold text-teal-600 block mb-1">-16 kg</span>
+                <span className="text-sm text-slate-500 font-medium">em apenas 3 meses</span>
               </div>
-            )}
+              <div className="bg-slate-100 rounded-2xl w-32 h-40 flex items-center justify-center relative shrink-0">
+                <User className="w-10 h-10 text-slate-300" />
+                <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 flex gap-1">
+                  <span className="bg-slate-900 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">Antes</span>
+                  <span className="bg-teal-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">Depois</span>
+                </div>
+              </div>
+            </div>
 
-            {/* MULTIPLE CHOICE */}
-            {currentQuestion?.question_type === "multiple_choice" && (
-              <div className="flex flex-col gap-3 w-full">
-                {options.map((opt: string, idx: number) => {
-                  const isSelected = Array.isArray(tempAnswer) && tempAnswer.includes(opt);
-                  return (
-                    <button
-                      key={idx}
-                      onClick={() => handleMultipleChoiceChange(opt)}
-                      className={`w-full py-4 px-5 text-left text-base rounded-2xl active:scale-[0.98] transition-all duration-200 border-2 flex items-center gap-3 ${
-                        isSelected
-                          ? "border-teal-500 bg-teal-50"
-                          : "border-slate-200 bg-white"
-                      }`}
-                    >
-                      <div
-                        className={`w-6 h-6 rounded flex items-center justify-center border shrink-0 ${
-                          isSelected ? "bg-teal-500 border-teal-500" : "bg-white border-slate-300"
+            <div className="flex items-start gap-2 text-xs text-slate-400 mt-auto bg-slate-50 p-3 rounded-xl">
+              <Info className="w-4 h-4 shrink-0 mt-0.5" />
+              <p>Os resultados são individuais e cada organismo responde de uma maneira.</p>
+            </div>
+
+            <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-md border-t border-slate-100 z-50 md:static md:bg-transparent md:border-none md:p-0 md:mt-8">
+              <Button 
+                className="w-full bg-teal-600 hover:bg-teal-700 text-white rounded-2xl py-4 min-h-[56px] text-lg font-semibold"
+                onClick={handleInterstitialNext}
+              >
+                Continuar
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* INTERSTITIAL 3 */}
+        {currentStepObj.type === "interstitial" && currentStepObj.id === "int-3" && (
+          <div className="w-full max-w-md mx-auto min-h-[calc(100vh-140px)] flex flex-col justify-center items-center text-center">
+            
+            <div className="bg-teal-50 rounded-full p-6 mb-8">
+              <Sparkles className="w-16 h-16 text-teal-600" />
+            </div>
+            
+            <h2 className="font-heading text-2xl font-bold text-slate-900 mb-3">
+              Você está quase lá!
+            </h2>
+            <p className="text-slate-500 text-base mb-10">
+              Faltam apenas algumas perguntas para montarmos o tratamento ideal para você.
+            </p>
+
+            <div className="w-full max-w-[200px] h-3 bg-slate-100 rounded-full overflow-hidden mb-12">
+              <div 
+                className="h-full bg-teal-500 rounded-full transition-all duration-1000 ease-out w-0"
+                style={{ width: '85%' }}
+              ></div>
+            </div>
+
+            <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-md border-t border-slate-100 z-50 md:static md:bg-transparent md:border-none md:p-0 w-full">
+              <Button 
+                className="w-full bg-teal-600 hover:bg-teal-700 text-white rounded-2xl py-4 min-h-[56px] text-lg font-semibold"
+                onClick={handleInterstitialNext}
+              >
+                Continuar
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* QUESTION RENDER */}
+        {currentStepObj.type === "question" && (
+          <div className="w-full max-w-2xl mx-auto min-h-[calc(100vh-140px)] flex flex-col justify-center">
+            <h2 className="font-heading text-xl md:text-2xl font-bold text-slate-900 text-center mb-8 px-2 leading-relaxed">
+              {currentStepObj.data.question_text}
+            </h2>
+
+            <div className="w-full">
+              {/* SINGLE CHOICE */}
+              {currentStepObj.data.question_type === "single_choice" && (
+                <div className="flex flex-col gap-3 w-full">
+                  {(Array.isArray(currentStepObj.data.options) ? currentStepObj.data.options : JSON.parse(currentStepObj.data.options || "[]")).map((opt: string, idx: number) => {
+                    const isSelected = tempAnswer === opt;
+                    return (
+                      <button
+                        key={idx}
+                        onClick={() => handleSingleChoice(opt)}
+                        className={`w-full py-4 px-5 text-left text-base rounded-2xl active:scale-[0.98] transition-all duration-200 border-2 ${
+                          isSelected
+                            ? "border-teal-500 bg-teal-50"
+                            : "border-slate-200 bg-white"
                         }`}
                       >
-                        {isSelected && (
-                          <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                          </svg>
-                        )}
-                      </div>
-                      <span className="font-medium text-slate-800">{opt}</span>
-                    </button>
-                  );
-                })}
-                <Button
-                  size="lg"
-                  className="w-full mt-4 bg-teal-600 text-white rounded-2xl py-4 text-lg font-semibold min-h-[56px]"
-                  onClick={() => handleNext(tempAnswer)}
-                  disabled={!Array.isArray(tempAnswer) || tempAnswer.length === 0}
-                >
-                  {isLastQuestion ? "Ver meu tratamento" : "Próxima"}
-                </Button>
-              </div>
-            )}
-
-            {/* TEXT */}
-            {currentQuestion?.question_type === "text" && (
-              <div className="flex flex-col gap-4 w-full">
-                <Textarea
-                  placeholder="Digite sua resposta..."
-                  className="w-full min-h-[120px] p-4 text-base bg-slate-50 border-2 border-slate-200 rounded-2xl focus:border-teal-500 focus:ring-0 resize-none"
-                  value={tempAnswer}
-                  onChange={(e) => setTempAnswer(e.target.value)}
-                />
-                <Button
-                  size="lg"
-                  className="w-full bg-teal-600 text-white rounded-2xl py-4 text-lg font-semibold mt-4 min-h-[56px]"
-                  onClick={() => handleNext(tempAnswer)}
-                  disabled={!tempAnswer?.trim()}
-                >
-                  {isLastQuestion ? "Ver meu tratamento" : "Próxima"}
-                </Button>
-              </div>
-            )}
-
-            {/* NUMBER */}
-            {currentQuestion?.question_type === "number" && (
-              <div className="flex flex-col gap-4 w-full">
-                <Input
-                  type="tel"
-                  placeholder="0"
-                  className="w-full py-4 px-5 text-center text-2xl font-bold bg-slate-50 border-2 border-slate-200 rounded-2xl focus:border-teal-500 min-h-[64px]"
-                  value={tempAnswer}
-                  onChange={(e) => setTempAnswer(e.target.value)}
-                />
-                <Button
-                  size="lg"
-                  className="w-full bg-teal-600 text-white rounded-2xl py-4 text-lg font-semibold mt-4 min-h-[56px]"
-                  onClick={() => handleNext(tempAnswer)}
-                  disabled={!tempAnswer}
-                >
-                  {isLastQuestion ? "Ver meu tratamento" : "Próxima"}
-                </Button>
-              </div>
-            )}
-
-            {/* SCALE */}
-            {currentQuestion?.question_type === "scale" && (
-              <div className="flex flex-col gap-8 mt-4 w-full">
-                <div className="flex flex-col items-center">
-                  <span className="text-5xl font-bold text-teal-600 mb-6">{tempAnswer}</span>
-                  <input
-                    type="range"
-                    min="1"
-                    max="10"
-                    step="1"
-                    value={tempAnswer || 5}
-                    onChange={(e) => setTempAnswer(Number(e.target.value))}
-                    className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-teal-600"
-                  />
-                  <div className="flex justify-between w-full mt-2 text-sm font-medium text-slate-400">
-                    <span>1</span>
-                    <span>10</span>
-                  </div>
+                        <span className="font-medium text-slate-800">{opt}</span>
+                      </button>
+                    );
+                  })}
                 </div>
-                <Button
-                  size="lg"
-                  className="w-full bg-teal-600 text-white rounded-2xl py-4 text-lg font-semibold min-h-[56px]"
-                  onClick={() => handleNext(tempAnswer)}
-                >
-                  {isLastQuestion ? "Ver meu tratamento" : "Próxima"}
-                </Button>
-              </div>
-            )}
+              )}
+
+              {/* YES/NO */}
+              {currentStepObj.data.question_type === "yes_no" && (
+                <div className="flex gap-4 w-full">
+                  {["Sim", "Não"].map((opt) => {
+                    const isSelected = tempAnswer === opt;
+                    return (
+                      <button
+                        key={opt}
+                        onClick={() => handleSingleChoice(opt)}
+                        className={`flex-1 py-6 text-center text-lg font-semibold rounded-2xl active:scale-[0.98] transition-all duration-200 border-2 ${
+                          isSelected
+                            ? "border-teal-500 bg-teal-50"
+                            : "border-slate-200 bg-white"
+                        }`}
+                      >
+                        {opt}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* MULTIPLE CHOICE */}
+              {currentStepObj.data.question_type === "multiple_choice" && (
+                <div className="flex flex-col gap-3 w-full">
+                  {(Array.isArray(currentStepObj.data.options) ? currentStepObj.data.options : JSON.parse(currentStepObj.data.options || "[]")).map((opt: string, idx: number) => {
+                    const isSelected = Array.isArray(tempAnswer) && tempAnswer.includes(opt);
+                    return (
+                      <button
+                        key={idx}
+                        onClick={() => handleMultipleChoiceChange(opt)}
+                        className={`w-full py-4 px-5 text-left text-base rounded-2xl active:scale-[0.98] transition-all duration-200 border-2 flex items-center gap-3 ${
+                          isSelected
+                            ? "border-teal-500 bg-teal-50"
+                            : "border-slate-200 bg-white"
+                        }`}
+                      >
+                        <div
+                          className={`w-6 h-6 rounded flex items-center justify-center border shrink-0 ${
+                            isSelected ? "bg-teal-500 border-teal-500" : "bg-white border-slate-300"
+                          }`}
+                        >
+                          {isSelected && (
+                            <CheckCircle className="w-4 h-4 text-white" />
+                          )}
+                        </div>
+                        <span className="font-medium text-slate-800">{opt}</span>
+                      </button>
+                    );
+                  })}
+                  <Button
+                    size="lg"
+                    className="w-full mt-4 bg-teal-600 hover:bg-teal-700 text-white rounded-2xl py-4 text-lg font-semibold min-h-[56px]"
+                    onClick={() => handleNext(tempAnswer)}
+                    disabled={!Array.isArray(tempAnswer) || tempAnswer.length === 0}
+                  >
+                    {isLastQuestion ? "Ver meu tratamento" : "Próxima"}
+                  </Button>
+                </div>
+              )}
+
+              {/* TEXT */}
+              {currentStepObj.data.question_type === "text" && (
+                <div className="flex flex-col gap-4 w-full">
+                  <Textarea
+                    placeholder="Digite sua resposta..."
+                    className="w-full min-h-[120px] p-4 text-base bg-slate-50 border-2 border-slate-200 rounded-2xl focus:border-teal-500 focus:ring-0 resize-none"
+                    value={tempAnswer}
+                    onChange={(e) => setTempAnswer(e.target.value)}
+                  />
+                  <Button
+                    size="lg"
+                    className="w-full bg-teal-600 hover:bg-teal-700 text-white rounded-2xl py-4 text-lg font-semibold mt-4 min-h-[56px]"
+                    onClick={() => handleNext(tempAnswer)}
+                    disabled={!tempAnswer?.trim()}
+                  >
+                    {isLastQuestion ? "Ver meu tratamento" : "Próxima"}
+                  </Button>
+                </div>
+              )}
+
+              {/* NUMBER */}
+              {currentStepObj.data.question_type === "number" && (
+                <div className="flex flex-col gap-4 w-full">
+                  <Input
+                    type="tel"
+                    placeholder="0"
+                    className="w-full py-4 px-5 text-center text-2xl font-bold bg-slate-50 border-2 border-slate-200 rounded-2xl focus:border-teal-500 min-h-[64px]"
+                    value={tempAnswer}
+                    onChange={(e) => setTempAnswer(e.target.value)}
+                  />
+                  <Button
+                    size="lg"
+                    className="w-full bg-teal-600 hover:bg-teal-700 text-white rounded-2xl py-4 text-lg font-semibold mt-4 min-h-[56px]"
+                    onClick={() => handleNext(tempAnswer)}
+                    disabled={!tempAnswer}
+                  >
+                    {isLastQuestion ? "Ver meu tratamento" : "Próxima"}
+                  </Button>
+                </div>
+              )}
+
+              {/* SCALE */}
+              {currentStepObj.data.question_type === "scale" && (
+                <div className="flex flex-col gap-8 mt-4 w-full">
+                  <div className="flex flex-col items-center">
+                    <span className="text-5xl font-bold text-teal-600 mb-6">{tempAnswer}</span>
+                    <input
+                      type="range"
+                      min="1"
+                      max="10"
+                      step="1"
+                      value={tempAnswer || 5}
+                      onChange={(e) => setTempAnswer(Number(e.target.value))}
+                      className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-teal-600"
+                    />
+                    <div className="flex justify-between w-full mt-2 text-sm font-medium text-slate-400">
+                      <span>1</span>
+                      <span>10</span>
+                    </div>
+                  </div>
+                  <Button
+                    size="lg"
+                    className="w-full bg-teal-600 hover:bg-teal-700 text-white rounded-2xl py-4 text-lg font-semibold min-h-[56px]"
+                    onClick={() => handleNext(tempAnswer)}
+                  >
+                    {isLastQuestion ? "Ver meu tratamento" : "Próxima"}
+                  </Button>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        )}
       </main>
     </div>
   );
