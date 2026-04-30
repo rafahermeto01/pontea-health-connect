@@ -125,25 +125,12 @@ export default function DoctorQuizReviews() {
 
   // Helper to calculate BMI
   const calculateBMI = (answers: any) => {
-    let pesoQuestionId = "";
-    let alturaQuestionId = "";
+    // Busca na lista de perguntas (já carregada no handleOpenReview via supabase)
+    const pesoQuestion = orderedQuestions.find(q => q.question_text.toLowerCase().includes('peso'));
+    const alturaQuestion = orderedQuestions.find(q => q.question_text.toLowerCase().includes('altura'));
 
-    if (typeof answers === 'object' && answers !== null) {
-      Object.keys(answers).forEach((key) => {
-        const questionText = (questionMap[key] || "").toLowerCase();
-        const strVal = String(answers[key]).toLowerCase();
-        
-        if (questionText.includes("peso") || strVal.includes("kg") || key.toLowerCase().includes("peso")) {
-          pesoQuestionId = key;
-        }
-        if (questionText.includes("altura") || strVal.includes("cm") || key.toLowerCase().includes("altura")) {
-          alturaQuestionId = key;
-        }
-      });
-    }
-
-    const weight = parseFloat(String(answers[pesoQuestionId]).replace(',', '.')) || 0;
-    const height = parseFloat(String(answers[alturaQuestionId]).replace(',', '.')) || 0;
+    const weight = parseFloat(String(answers[pesoQuestion?.id]).replace(',', '.')) || 0;
+    const height = parseFloat(String(answers[alturaQuestion?.id]).replace(',', '.')) || 0;
     
     console.log('Peso:', weight, 'Altura:', height, 'Tipos:', typeof weight, typeof height);
 
